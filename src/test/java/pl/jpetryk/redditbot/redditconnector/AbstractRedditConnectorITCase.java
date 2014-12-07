@@ -1,8 +1,12 @@
 package pl.jpetryk.redditbot.redditconnector;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import pl.jpetryk.redditbot.PropertiesReader;
+import pl.jpetryk.redditbot.model.Comment;
+
+import java.util.List;
 
 /**
  * Created by Jan on 06/12/14.
@@ -15,9 +19,9 @@ public abstract class AbstractRedditConnectorITCase<T extends RedditConnectorInt
 
     protected T connector = createInstance();
 
-    @Test
-    public void testInitialize() {
-        connector.initialize(testProperties.getProperty("reddit-useragent"));
+    @Before
+    public void init() {
+        connector.initialize(getUserAgent());
     }
 
     @Test
@@ -32,6 +36,17 @@ public abstract class AbstractRedditConnectorITCase<T extends RedditConnectorInt
         String login = testProperties.getProperty("reddit-login");
         String password = "asdasd";
         Assert.assertFalse(connector.login(login, password));
+    }
+
+    @Test
+    public void testGetNewestSubredditComments() {
+        int requestedNumberOfComments = 100;
+        List<Comment> commentList = connector.getNewestSubredditComments("all", requestedNumberOfComments);
+        Assert.assertEquals(requestedNumberOfComments, commentList.size());
+    }
+
+    protected String getUserAgent() {
+        return testProperties.getProperty("reddit-useragent");
     }
 
 
