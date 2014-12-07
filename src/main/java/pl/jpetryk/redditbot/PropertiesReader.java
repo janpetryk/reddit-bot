@@ -13,6 +13,10 @@ import java.util.Properties;
 public class PropertiesReader {
 
 
+    private static final Logger logger = Logger.getLogger(PropertiesReader.class);
+    public static final String DEFAULT_VALUE = "";
+    /*package*/ static final String CONFIG_FOLDER = "config/";
+
     private Properties properties;
     private String fileName;
 
@@ -29,10 +33,6 @@ public class PropertiesReader {
             throw new RuntimeException(message);
         }
     }
-
-    private static final Logger logger = Logger.getLogger(PropertiesReader.class);
-    public static final String DEFAULT_VALUE = "";
-    /*package*/ static final String CONFIG_FOLDER = "config/";
 
     public String getProperty(String key) {
         String result = properties.getProperty(key);
