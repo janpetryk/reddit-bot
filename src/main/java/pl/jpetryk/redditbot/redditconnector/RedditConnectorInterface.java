@@ -1,6 +1,9 @@
 package pl.jpetryk.redditbot.redditconnector;
 
+import pl.jpetryk.redditbot.exceptions.ConnectionException;
+import pl.jpetryk.redditbot.exceptions.InvalidCredentialsException;
 import pl.jpetryk.redditbot.model.Comment;
+import pl.jpetryk.redditbot.model.LoggedInUserInterface;
 
 import java.util.List;
 
@@ -9,11 +12,9 @@ import java.util.List;
  */
 public interface RedditConnectorInterface {
 
-    public void initialize(String userAgent);
+    public LoggedInUserInterface login(String login, String password) throws InvalidCredentialsException, ConnectionException;
 
-    public boolean login(String login, String password);
-
-    public List<Comment> getNewestSubredditComments(String subredditName, int numberOfComments);
+    public List<Comment> getNewestSubredditComments(String subredditName, int numberOfComments) throws ConnectionException;
 
 
 }

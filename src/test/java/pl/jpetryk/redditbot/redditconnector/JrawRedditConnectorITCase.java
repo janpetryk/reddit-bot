@@ -8,6 +8,7 @@ public class JrawRedditConnectorITCase extends AbstractRedditConnectorITCase<Jra
 
     @Override
     protected JrawRedditConnector createInstance() {
-        return new JrawRedditConnector();
+        return new JrawRedditConnector(getUserAgent());
     }
+
 }

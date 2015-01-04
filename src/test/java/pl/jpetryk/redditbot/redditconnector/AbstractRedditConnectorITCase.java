@@ -4,6 +4,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import pl.jpetryk.redditbot.PropertiesReader;
+import pl.jpetryk.redditbot.exceptions.ConnectionException;
+import pl.jpetryk.redditbot.exceptions.InvalidCredentialsException;
 import pl.jpetryk.redditbot.model.Comment;
 
 import java.util.List;
@@ -19,27 +21,22 @@ public abstract class AbstractRedditConnectorITCase<T extends RedditConnectorInt
 
     protected T connector = createInstance();
 
-    @Before
-    public void init() {
-        connector.initialize(getUserAgent());
-    }
-
     @Test
-    public void testLoginWithValidCredentials() {
+    public void testLoginWithValidCredentials() throws InvalidCredentialsException, ConnectionException {
         String login = testProperties.getProperty("reddit-login");
         String password = testProperties.getProperty("reddit-password");
-        Assert.assertTrue(connector.login(login, password));
+        Assert.assertNotNull(connector.login(login, password));
     }
 
-    @Test
-    public void testLoginWithInvalidCredentials() {
+    @Test(expected = InvalidCredentialsException.class)
+    public void testLoginWithInvalidCredentials() throws ConnectionException, InvalidCredentialsException {
         String login = testProperties.getProperty("reddit-login");
         String password = "asdasd";
-        Assert.assertFalse(connector.login(login, password));
+        connector.login(login, password);
     }
 
     @Test
-    public void testGetNewestSubredditComments() {
+    public void testGetNewestSubredditComments() throws ConnectionException {
         int requestedNumberOfComments = 100;
         List<Comment> commentList = connector.getNewestSubredditComments("all", requestedNumberOfComments);
         Assert.assertEquals(requestedNumberOfComments, commentList.size());

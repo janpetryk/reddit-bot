@@ -8,7 +8,11 @@ import net.dean.jraw.http.NetworkException;
 import net.dean.jraw.models.LoggedInAccount;
 import org.apache.log4j.Logger;
 import org.codehaus.jackson.JsonNode;
+import pl.jpetryk.redditbot.exceptions.ConnectionException;
+import pl.jpetryk.redditbot.exceptions.InvalidCredentialsException;
 import pl.jpetryk.redditbot.model.Comment;
+import pl.jpetryk.redditbot.model.JrawLoggedInUserAdapter;
+import pl.jpetryk.redditbot.model.LoggedInUserInterface;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -22,48 +26,41 @@ public class JrawRedditConnector implements RedditConnectorInterface {
 
     private RedditClient redditClient;
     private static final Logger logger = Logger.getLogger(JrawRedditConnector.class);
-    private LoggedInAccount account;
 
-    @Override
-    public void initialize(String userAgent) {
+    public JrawRedditConnector(String userAgent) {
         redditClient = new RedditClient(userAgent);
     }
 
     @Override
-    public boolean login(String login, String password) {
+    public LoggedInUserInterface login(String login, String password) throws InvalidCredentialsException, ConnectionException {
         try {
-            account = redditClient.login(Credentials.standard(login, password));
-            boolean loggedIn = redditClient.isLoggedIn();
-            if (loggedIn) {
-                logger.info("Logged in as " + login);
-                return true;
-            } else {
-                logger.warn("Could not log in as " + login);
-                return false;
-            }
-        } catch (NetworkException | ApiException e) {
-            logger.warn("Could not log in as " + login, e);
-            return false;
+            return new JrawLoggedInUserAdapter(redditClient.login(Credentials.standard(login, password)));
+        } catch (NetworkException e) {
+            throw new ConnectionException(e);
+        } catch (ApiException e) {
+            throw new InvalidCredentialsException("Wrong credentials for user: " + login, e);
         }
+
     }
 
     @Override
-    public List<Comment> getNewestSubredditComments(String subredditName, int numberOfComments) {
+    public List<Comment> getNewestSubredditComments(String subredditName, int numberOfComments) throws ConnectionException {
         try {
+            List<Comment> result = new ArrayList<>();
             String subredditPath = JrawUtils.getSubredditPath(subredditName, "/comments.json") + "?limit=" + Integer.toString(numberOfComments);
             JsonNode response = redditClient.execute(redditClient.request().path(subredditPath).build()).getJson();
-            List<Comment> result = new ArrayList<>();
             Iterator<JsonNode> iterator = response.get("data").get("children").getElements();
             while (iterator.hasNext()) {
                 JsonNode jsonNode = iterator.next().get("data");
-                Comment comment = Comment.builder().id(jsonNode.get("id").asText()).body(jsonNode.get("body")
+                Comment comment = new Comment.Builder(jsonNode.get("id").asText()).body(jsonNode.get("body")
                         .asText()).build();
                 result.add(comment);
             }
+            logger.info(result.size() + " comments read from " + subredditName + " subreddit");
             return result;
+
         } catch (NetworkException e) {
-            logger.error("Network error", e);
-            return new ArrayList<>();
+            throw new ConnectionException(e);
         }
     }
 }
