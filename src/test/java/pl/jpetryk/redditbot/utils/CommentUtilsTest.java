@@ -75,6 +75,6 @@ public class CommentUtilsTest {
 
 
     private Comment prepareComment(String body) {
-        return Comment.builder().id("asdasda").body(body).build();
+        return new Comment.Builder("asdasda").body(body).build();
     }
 }

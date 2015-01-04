@@ -1,5 +1,12 @@
 package pl.jpetryk.redditbot.model;
 
+import pl.jpetryk.redditbot.utils.CommentUtils;
+
+import java.util.HashSet;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  * Created by Jan on 07/12/14.
  */
@@ -7,6 +14,11 @@ public class Comment {
 
     private String id;
     private String body;
+
+    private Comment(Builder builder) {
+        id = builder.id;
+        body = builder.body;
+    }
 
     public String getId() {
         return id;
@@ -16,22 +28,30 @@ public class Comment {
         return body;
     }
 
-    public static Builder builder() {
-        return new Builder();
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Comment comment = (Comment) o;
+
+        if (!id.equals(comment.id)) return false;
+
+        return true;
     }
 
-    private Comment(Builder builder) {
-        id = builder.id;
-        body = builder.body;
+    @Override
+    public int hashCode() {
+        return id.hashCode();
     }
 
     public static class Builder {
         private String id;
         private String body;
 
-        public Builder id(String id) {
+        public Builder(String id) {
             this.id = id;
-            return this;
         }
 
         public Builder body(String body) {

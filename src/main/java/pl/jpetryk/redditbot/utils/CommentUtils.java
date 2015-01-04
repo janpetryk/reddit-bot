@@ -2,9 +2,7 @@ package pl.jpetryk.redditbot.utils;
 
 import pl.jpetryk.redditbot.model.Comment;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -36,15 +34,15 @@ public class CommentUtils {
         return false;
     }
 
-    public static List<String> getTwitterLinksFromComment(Comment comment) {
-        List<String> twitterLinkList = new ArrayList<>();
+    public static Set<String> getTwitterLinksFromComment(Comment comment) {
+        Set<String> twitterLinks = new HashSet<>();
         for (String regex : TWITTER_PATTERN_LIST) {
             Matcher matcher = Pattern.compile(regex).matcher(comment.getBody());
             while (matcher.find()) {
-                twitterLinkList.add(matcher.group());
+                twitterLinks.add(matcher.group());
             }
         }
-        return twitterLinkList;
+        return twitterLinks;
     }
 
 
