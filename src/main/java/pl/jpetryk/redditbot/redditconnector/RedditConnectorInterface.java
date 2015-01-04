@@ -1,9 +1,9 @@
 package pl.jpetryk.redditbot.redditconnector;
 
-import pl.jpetryk.redditbot.exceptions.ConnectionException;
-import pl.jpetryk.redditbot.exceptions.InvalidCredentialsException;
+import pl.jpetryk.redditbot.exceptions.NetworkConnectionException;
+import pl.jpetryk.redditbot.exceptions.RedditApiException;
 import pl.jpetryk.redditbot.model.Comment;
-import pl.jpetryk.redditbot.model.LoggedInUserInterface;
+import pl.jpetryk.redditbot.model.RedditLoggedInAccountInterface;
 
 import java.util.List;
 
@@ -12,9 +12,9 @@ import java.util.List;
  */
 public interface RedditConnectorInterface {
 
-    public LoggedInUserInterface login(String login, String password) throws InvalidCredentialsException, ConnectionException;
+    public RedditLoggedInAccountInterface login(String login, String password) throws RedditApiException, NetworkConnectionException;
 
-    public List<Comment> getNewestSubredditComments(String subredditName, int numberOfComments) throws ConnectionException;
+    public List<Comment> getNewestSubredditComments(String subredditName, int numberOfComments) throws NetworkConnectionException;
 
-
+    public String postComment(RedditLoggedInAccountInterface user, Comment parentComment, String commentBody) throws NetworkConnectionException, RedditApiException;
 }

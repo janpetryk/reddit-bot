@@ -5,14 +5,14 @@ import net.dean.jraw.JrawUtils;
 import net.dean.jraw.RedditClient;
 import net.dean.jraw.http.Credentials;
 import net.dean.jraw.http.NetworkException;
-import net.dean.jraw.models.LoggedInAccount;
+import net.dean.jraw.managers.AccountManager;
 import org.apache.log4j.Logger;
 import org.codehaus.jackson.JsonNode;
-import pl.jpetryk.redditbot.exceptions.ConnectionException;
-import pl.jpetryk.redditbot.exceptions.InvalidCredentialsException;
+import pl.jpetryk.redditbot.exceptions.NetworkConnectionException;
+import pl.jpetryk.redditbot.exceptions.RedditApiException;
 import pl.jpetryk.redditbot.model.Comment;
 import pl.jpetryk.redditbot.model.JrawLoggedInUserAdapter;
-import pl.jpetryk.redditbot.model.LoggedInUserInterface;
+import pl.jpetryk.redditbot.model.RedditLoggedInAccountInterface;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -32,19 +32,19 @@ public class JrawRedditConnector implements RedditConnectorInterface {
     }
 
     @Override
-    public LoggedInUserInterface login(String login, String password) throws InvalidCredentialsException, ConnectionException {
+    public RedditLoggedInAccountInterface login(String login, String password) throws RedditApiException, NetworkConnectionException {
         try {
             return new JrawLoggedInUserAdapter(redditClient.login(Credentials.standard(login, password)));
         } catch (NetworkException e) {
-            throw new ConnectionException(e);
+            throw new NetworkConnectionException(e);
         } catch (ApiException e) {
-            throw new InvalidCredentialsException("Wrong credentials for user: " + login, e);
+            throw new RedditApiException(e.getReason(), e.getExplanation());
         }
 
     }
 
     @Override
-    public List<Comment> getNewestSubredditComments(String subredditName, int numberOfComments) throws ConnectionException {
+    public List<Comment> getNewestSubredditComments(String subredditName, int numberOfComments) throws NetworkConnectionException {
         try {
             List<Comment> result = new ArrayList<>();
             String subredditPath = JrawUtils.getSubredditPath(subredditName, "/comments.json") + "?limit=" + Integer.toString(numberOfComments);
@@ -52,15 +52,43 @@ public class JrawRedditConnector implements RedditConnectorInterface {
             Iterator<JsonNode> iterator = response.get("data").get("children").getElements();
             while (iterator.hasNext()) {
                 JsonNode jsonNode = iterator.next().get("data");
-                Comment comment = new Comment.Builder(jsonNode.get("id").asText()).body(jsonNode.get("body")
-                        .asText()).build();
+                Comment comment = new Comment.Builder()
+                        .commentId(jsonNode.get("id").asText())
+                        .body(jsonNode.get("body").asText())
+                        .linkId(jsonNode.get("link_id").asText().substring(3))//unfortunately reddit api is inconsistent when it comes to comments, it displays comment id in format of base 36 id (without prefix) and link id with prefix. Substring here gets rid of prefix
+                        .build();
                 result.add(comment);
             }
             logger.info(result.size() + " comments read from " + subredditName + " subreddit");
             return result;
 
         } catch (NetworkException e) {
-            throw new ConnectionException(e);
+            throw new NetworkConnectionException(e);
+        }
+    }
+
+    @Override
+    public String postComment(RedditLoggedInAccountInterface user, Comment parentComment, String commentBody)
+            throws NetworkConnectionException, RedditApiException {
+        try {
+            AccountManager accountManager = new AccountManager(redditClient);
+            net.dean.jraw.models.Comment commentToReply = getComment(parentComment.getCommentId(),
+                    parentComment.getLinkId());
+            String repliedCommentId = accountManager.reply(commentToReply, commentBody);
+            return repliedCommentId.substring(3);
+        } catch (NetworkException e) {
+            throw new NetworkConnectionException(e);
+        } catch (ApiException e) {
+            throw new RedditApiException(e.getReason(),e.getExplanation());
+        }
+    }
+
+    /*package*/ net.dean.jraw.models.Comment getComment(String commentId, String linkId) throws NetworkConnectionException {
+        try {
+            return redditClient.getSubmission(new RedditClient.SubmissionRequest(linkId).focus(commentId))
+                    .getComments().get(0);
+        } catch (NetworkException e) {
+            throw new NetworkConnectionException(e);
         }
     }
 }

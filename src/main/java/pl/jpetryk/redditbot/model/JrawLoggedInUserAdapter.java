@@ -5,7 +5,7 @@ import net.dean.jraw.models.LoggedInAccount;
 /**
  * Created by Jan on 19/12/14.
  */
-public class JrawLoggedInUserAdapter implements LoggedInUserInterface {
+public class JrawLoggedInUserAdapter implements RedditLoggedInAccountInterface {
 
     private LoggedInAccount loggedInAccount;
 
