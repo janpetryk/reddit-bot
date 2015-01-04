@@ -11,6 +11,12 @@ Desktop.ini
 # Idea config files
 *.iml
 
+# Class files
+*.class
+
+# Target folder
+target
+
 # Recycle Bin used on file shares
 $RECYCLE.BIN/
 
