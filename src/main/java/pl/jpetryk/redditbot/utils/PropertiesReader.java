@@ -1,4 +1,4 @@
-package pl.jpetryk.redditbot;
+package pl.jpetryk.redditbot.utils;
 
 import org.apache.log4j.Logger;
 
@@ -38,10 +38,8 @@ public class PropertiesReader {
         String result = properties.getProperty(key);
         if (result == null) {
             logger.error("Could not find property " + key + " in file " + fileName);
-            return DEFAULT_VALUE;
-        } else {
-            return result;
         }
+        return result;
     }
 
     private Properties openPropertyFile(String fileName) throws IOException {

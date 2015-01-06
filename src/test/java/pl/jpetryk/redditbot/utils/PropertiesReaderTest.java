@@ -1,9 +1,10 @@
-package pl.jpetryk.redditbot;
+package pl.jpetryk.redditbot.utils;
 
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import pl.jpetryk.redditbot.utils.PropertiesReader;
 
 import java.io.File;
 import java.io.FileOutputStream;
