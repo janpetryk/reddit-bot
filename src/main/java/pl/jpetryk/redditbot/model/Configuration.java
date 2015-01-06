@@ -1,7 +1,6 @@
 package pl.jpetryk.redditbot.model;
 
 import com.google.common.collect.ImmutableList;
-import sun.plugin.dom.exception.InvalidStateException;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -132,25 +131,25 @@ public class Configuration {
 
         private void validate() {
             if (userAgent == null) {
-                throw new InvalidStateException(String.format(FIELD_IS_EMPTY_MESSAGE, "userAgent"));
+                throw new IllegalStateException(String.format(FIELD_IS_EMPTY_MESSAGE, "userAgent"));
             }
             if (login == null) {
-                throw new InvalidStateException(String.format(FIELD_IS_EMPTY_MESSAGE, "login"));
+                throw new IllegalStateException(String.format(FIELD_IS_EMPTY_MESSAGE, "login"));
             }
             if (password == null) {
-                throw new InvalidStateException(String.format(FIELD_IS_EMPTY_MESSAGE, "password"));
+                throw new IllegalStateException(String.format(FIELD_IS_EMPTY_MESSAGE, "password"));
             }
             if (subredditList.isEmpty()) {
-                throw new InvalidStateException(String.format(FIELD_IS_EMPTY_MESSAGE, "subredditList"));
+                throw new IllegalStateException(String.format(FIELD_IS_EMPTY_MESSAGE, "subredditList"));
             }
             if (authorizationType == null) {
-                throw new InvalidStateException(String.format(FIELD_IS_EMPTY_MESSAGE, "authorizationType"));
+                throw new IllegalStateException(String.format(FIELD_IS_EMPTY_MESSAGE, "authorizationType"));
             }
             if (authorizationType == AuthorizationType.OAUTH && clientId == null) {
-                throw new InvalidStateException(String.format(OAUTH_MANDATORY_FIELD_IS_EMPTY_MESSAGE, "clientId"));
+                throw new IllegalStateException(String.format(OAUTH_MANDATORY_FIELD_IS_EMPTY_MESSAGE, "clientId"));
             }
             if (authorizationType == AuthorizationType.OAUTH && clientSecret == null) {
-                throw new InvalidStateException(String.format(OAUTH_MANDATORY_FIELD_IS_EMPTY_MESSAGE, "clientSecret"));
+                throw new IllegalStateException(String.format(OAUTH_MANDATORY_FIELD_IS_EMPTY_MESSAGE, "clientSecret"));
             }
         }
     }
