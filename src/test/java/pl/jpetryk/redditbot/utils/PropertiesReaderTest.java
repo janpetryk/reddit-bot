@@ -80,7 +80,7 @@ public class PropertiesReaderTest {
 
     @Test
     public void testReadValidFileWithoutGivenPropertyInIt() throws IOException {
-        Assert.assertEquals(propertiesReader.getProperty("invalidkey"), PropertiesReader.DEFAULT_VALUE);
+        Assert.assertNull(propertiesReader.getProperty("invalidkey"));
     }
 
 }
