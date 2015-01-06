@@ -9,7 +9,11 @@ import java.util.regex.Pattern;
 /**
  * Created by Jan on 07/12/14.
  */
-public class CommentUtils {
+public class CommentParser {
+
+
+    private List<String> regexList;
+    private List<String> commentContainsStringList;
 
     public static final String TWITTER_LONG_URL_PATTERN = ("https?:\\/\\/twitter\\.com\\/(?:#!\\/)?(\\w+)\\/status(es)?\\/(\\d+)");
 
@@ -19,7 +23,7 @@ public class CommentUtils {
         TWITTER_PATTERN_LIST = Arrays.asList(TWITTER_LONG_URL_PATTERN);
     }
 
-    private CommentUtils() {
+    public CommentParser() {
     }
 
     ;
