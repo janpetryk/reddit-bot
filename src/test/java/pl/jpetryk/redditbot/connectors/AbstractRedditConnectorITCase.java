@@ -1,12 +1,13 @@
-package pl.jpetryk.redditbot.redditconnector;
+package pl.jpetryk.redditbot.connectors;
 
 import org.junit.Assert;
 import org.junit.Test;
-import pl.jpetryk.redditbot.PropertiesReader;
+import pl.jpetryk.redditbot.model.PostCommentResult;
+import pl.jpetryk.redditbot.model.RedditLoggedInAccountInterface;
+import pl.jpetryk.redditbot.utils.PropertiesReader;
 import pl.jpetryk.redditbot.exceptions.NetworkConnectionException;
 import pl.jpetryk.redditbot.exceptions.RedditApiException;
 import pl.jpetryk.redditbot.model.Comment;
-import pl.jpetryk.redditbot.model.RedditLoggedInAccountInterface;
 
 import java.util.List;
 
@@ -23,7 +24,7 @@ public abstract class AbstractRedditConnectorITCase<T extends RedditConnectorInt
 
     @Test
     public void testLoginWithValidCredentials() throws RedditApiException, NetworkConnectionException {
-        Assert.assertNotNull(login());
+        Assert.assertNotNull(loginStandard());
     }
 
     @Test
@@ -31,29 +32,33 @@ public abstract class AbstractRedditConnectorITCase<T extends RedditConnectorInt
         String login = testProperties.getProperty("reddit-login");
         String password = "asdasd";
         try {
-            connector.login(login, password);
+            connector.loginStandard(login, password);
         } catch (RedditApiException e) {
             Assert.assertEquals("WRONG_PASSWORD", e.getReason());
         }
     }
 
     @Test
+    public void testLoginOAuthWithValidCredentials() throws NetworkConnectionException, RedditApiException {
+        Assert.assertNotNull(loginOAuth());
+    }
+
+    @Test
     public void testGetNewestSubredditComments() throws NetworkConnectionException {
         int requestedNumberOfComments = 100;
-        List<Comment> commentList = connector.getNewestSubredditComments("all", requestedNumberOfComments);
-
+        List<Comment> commentList = connector.getNewestSubredditComments("all");
         Assert.assertEquals(requestedNumberOfComments, commentList.size());
     }
 
     @Test
     public void testPostComment() throws NetworkConnectionException, RedditApiException {
-        RedditLoggedInAccountInterface user = login();
+        RedditLoggedInAccountInterface user = loginStandard();
         String message = "This is bot integration test message. Please ignore.";
         Comment commentToReply = prepareTestCommentToReply();
-        String commentId = connector.postComment(user, commentToReply, message);
-        Assert.assertNotNull(commentId);
-        Assert.assertEquals(message, getCommentBody(commentId, testProperties.getProperty("comment-to-reply-link-id")));
-
+        PostCommentResult result = connector.replyToComment(user, commentToReply.getCommentFullName(), message);
+        Assert.assertTrue(result.isSuccess());
+        Assert.assertEquals(message, getCommentBody(result.getResponseCommentId(),
+                testProperties.getProperty("comment-to-reply-link-id")));
     }
 
     /**
@@ -71,10 +76,18 @@ public abstract class AbstractRedditConnectorITCase<T extends RedditConnectorInt
         return testProperties.getProperty("reddit-useragent");
     }
 
-    protected RedditLoggedInAccountInterface login() throws RedditApiException, NetworkConnectionException {
+    protected RedditLoggedInAccountInterface loginStandard() throws RedditApiException, NetworkConnectionException {
         String login = testProperties.getProperty("reddit-login");
         String password = testProperties.getProperty("reddit-password");
-        return connector.login(login, password);
+        return connector.loginStandard(login, password);
+    }
+
+    protected RedditLoggedInAccountInterface loginOAuth() throws NetworkConnectionException, RedditApiException {
+        String login = testProperties.getProperty("reddit-login");
+        String password = testProperties.getProperty("reddit-password");
+        String clientId = testProperties.getProperty("reddit-client-id");
+        String clientSecret = testProperties.getProperty("reddit-client-secret");
+        return connector.loginOAuth(login, password, clientId, clientSecret);
     }
 
     protected Comment prepareTestCommentToReply() {
