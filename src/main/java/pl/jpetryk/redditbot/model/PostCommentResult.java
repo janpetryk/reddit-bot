@@ -17,8 +17,6 @@ public class PostCommentResult {
         this.errorMessage = errorMessage;
     }
 
-    ;
-
     public static PostCommentResult successful(String responseCommentId) {
         return new PostCommentResult(true, responseCommentId, null);
     }
@@ -29,6 +27,10 @@ public class PostCommentResult {
 
     public boolean isSuccess() {
         return successful;
+    }
+
+    public boolean isRateLimitError() {
+        return errorMessage != null && getErrorMessage().contains("RATELIMIT");
     }
 
     public String getResponseCommentId() {
