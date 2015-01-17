@@ -65,7 +65,6 @@ public class JrawRedditConnector implements RedditConnectorInterface {
                         .created(new DateTime(jsonNode.get("created").asLong() * 1000))
                         .author(jsonNode.get("author").asText())
                         .subreddit(jsonNode.get("subreddit").asText())
-                                //TODO subreddit
                         .build();
                 result.add(comment);
             }
