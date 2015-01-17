@@ -19,15 +19,14 @@ public class PropertiesReaderTest {
 
     private static final String KEY = "key";
     private static final String VALUE = "value";
-    private static final String FILE_NAME = "filename.properties";
-    private static final String FILE_PATH = PropertiesReader.CONFIG_FOLDER + FILE_NAME;
+    private static final String FILE_PATH = "resources/filename.properties";
 
     private PropertiesReader propertiesReader;
 
     @Before
     public void before() throws IOException {
         preparePropertiesFile();
-        propertiesReader = new PropertiesReader(FILE_NAME);
+        propertiesReader = new PropertiesReader(FILE_PATH);
     }
 
     @After
