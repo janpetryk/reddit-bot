@@ -4,7 +4,6 @@ import pl.jpetryk.redditbot.exceptions.NetworkConnectionException;
 import pl.jpetryk.redditbot.exceptions.RedditApiException;
 import pl.jpetryk.redditbot.model.Comment;
 import pl.jpetryk.redditbot.model.PostCommentResult;
-import pl.jpetryk.redditbot.model.RedditLoggedInAccountInterface;
 
 import java.util.List;
 
@@ -13,17 +12,12 @@ import java.util.List;
  */
 public interface RedditConnectorInterface {
 
-    public RedditLoggedInAccountInterface loginStandard(String login, String password)
-            throws RedditApiException, NetworkConnectionException;
-
-    public RedditLoggedInAccountInterface loginOAuth(String username, String password, String clientId,
-                                             String clientSecret)
-            throws RedditApiException, NetworkConnectionException;
+    public static final int MAX_COMMENTS_PER_REQUEST = 100;
 
     public List<Comment> getNewestSubredditComments(String subredditName)
             throws NetworkConnectionException;
 
-    public PostCommentResult replyToComment(RedditLoggedInAccountInterface user, String parentCommentFullName, String commentBody)
+    public PostCommentResult replyToComment(String parentCommentFullName, String responseCommentBody)
             throws NetworkConnectionException, RedditApiException;
 
 }
