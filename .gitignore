@@ -17,6 +17,9 @@ Desktop.ini
 # Target folder
 target
 
+# Resources folder
+resources
+
 # Recycle Bin used on file shares
 $RECYCLE.BIN/
 
