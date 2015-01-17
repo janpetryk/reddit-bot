@@ -8,6 +8,8 @@ import pl.jpetryk.redditbot.utils.RedditPrefixes;
  */
 public class Comment {
 
+    private static final String REDDIT_URL = "http://reddit.com/";
+
 
     private String commentId;
     private String body;
@@ -78,6 +80,11 @@ public class Comment {
     @Override
     public int hashCode() {
         return commentId != null ? commentId.hashCode() : 0;
+    }
+
+    @Override
+    public String toString() {
+        return body;
     }
 
     public static class Builder {
