@@ -1,31 +1,29 @@
 package pl.jpetryk.redditbot.model;
 
+import com.google.common.collect.EvictingQueue;
 import org.apache.log4j.Logger;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.Queue;
 
 /**
  * Created by Jan on 06/01/15.
  */
 public class Buffer<T> {
 
-    private static final Long ITEM_LIVE_TIME_IN_MILLIS = 3600000L;
-
     private static final Logger logger = Logger.getLogger(Buffer.class);
 
-    private Map<T, Long> map;
+    private Queue<T> queue;
+
 
     private int itemsAdded;
 
-    public Buffer() {
-        map = new HashMap<>();
+    public Buffer(int size) {
+        queue = EvictingQueue.create(size);
         itemsAdded = 0;
     }
 
     public void add(T t) {
-        map.put(t, System.currentTimeMillis());
+        queue.add(t);
         itemsAdded++;
     }
 
@@ -33,22 +31,7 @@ public class Buffer<T> {
         return itemsAdded;
     }
 
-    public void invalidateOldItems() {
-        Iterator<Map.Entry<T, Long>> iterator = map.entrySet().iterator();
-        int itemsDeleted = 0;
-        while (iterator.hasNext()) {
-            Map.Entry<T, Long> entry = iterator.next();
-            if (System.currentTimeMillis() - entry.getValue() > ITEM_LIVE_TIME_IN_MILLIS) {
-                iterator.remove();
-                itemsDeleted++;
-            }
-        }
-        if (itemsDeleted > 0) {
-            logger.info("Removed " + Integer.toString(itemsDeleted) + " items from buffer.");
-        }
-    }
-
     public boolean contains(T t) {
-        return map.keySet().contains(t);
+        return queue.contains(t);
     }
 }
