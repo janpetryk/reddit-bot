@@ -4,6 +4,7 @@ import pl.jpetryk.redditbot.bot.AbstractRedditBot;
 import pl.jpetryk.redditbot.connectors.RedditConnectorInterface;
 import pl.jpetryk.redditbot.connectors.TwitterConnectorInterface;
 import pl.jpetryk.redditbot.model.Comment;
+import pl.jpetryk.redditbot.model.Tweet;
 import pl.jpetryk.redditbot.utils.CommentParser;
 import pl.jpetryk.redditbot.utils.ResponseCommentCreator;
 
@@ -21,29 +22,38 @@ public class TweetsInCommentsBot extends AbstractRedditBot {
 
     private ResponseCommentCreator responseCommentCreator;
 
+    private List<String> userNameBlackList;
 
     public TweetsInCommentsBot(TwitterConnectorInterface twitterConnectorInterface,
                                RedditConnectorInterface redditConnectorInterface,
                                CommentParser commentParser,
-                               String subreddits, ResponseCommentCreator responseCommentCreator) {
+                               String subreddits,
+                               ResponseCommentCreator responseCommentCreator,
+                               List<String> userNameBlackList) {
         super(redditConnectorInterface, subreddits);
         twitterConnector = twitterConnectorInterface;
         this.commentParser = commentParser;
         this.responseCommentCreator = responseCommentCreator;
+        this.userNameBlackList = new ArrayList<>();
+        for (String string : userNameBlackList) {
+            this.userNameBlackList.add(string.toLowerCase());
+        }
     }
 
 
     @Override
     protected boolean shouldRespondToComment(Comment comment) throws Exception {
-        return commentParser.commentMatchesRegex(comment);
+        return commentParser.commentMatchesRegex(comment)
+                && !userNameBlackList.contains(comment.getAuthor().toLowerCase());
     }
 
     @Override
-    protected List<String> responseMessages(Comment comment) throws Exception {
-        List<String> result = new ArrayList<>();
+    protected String responseMessage(Comment comment) throws Exception {
+        List<Tweet> tweetList = new ArrayList<>();
         for (String string : commentParser.getRegexGroup(comment, 3)) {
-            result.add(responseCommentCreator.createResponseComment(twitterConnector.showStatus(Long.valueOf(string))));
+            tweetList.add(twitterConnector.showStatus(Long.valueOf(string)));
         }
-        return result;
+        return responseCommentCreator.createResponseComment(tweetList);
     }
+
 }

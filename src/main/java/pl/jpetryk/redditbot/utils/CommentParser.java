@@ -23,8 +23,8 @@ public class CommentParser {
     }
 
 
-    public Set<String> getRegexGroup(Comment comment, int groupId) {
-        Set<String> twitterLinks = new HashSet<>();
+    public List<String> getRegexGroup(Comment comment, int groupId) {
+        List<String> twitterLinks = new ArrayList<>();
         Matcher matcher = pattern.matcher(comment.getBody());
         while (matcher.find()) {
             twitterLinks.add(matcher.group(groupId));

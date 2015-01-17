@@ -14,13 +14,14 @@ import pl.jpetryk.redditbot.utils.ResponseCommentCreator;
 
 import java.io.File;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 
 /**
  * Created by Jan on 06/01/15.
  */
 public class Runner {
 
-    private static final Logger logger =  Logger.getLogger(Runner.class);
+    private static final Logger logger = Logger.getLogger(Runner.class);
 
     public static void main(String[] args) throws Exception {
 
@@ -55,11 +56,13 @@ public class Runner {
         logger.trace("created comment parser");
 
         String responseTemplate = Files.toString(new File("resources/reply-template"), Charset.defaultCharset());
-        ResponseCommentCreator responseCommentCreator = new ResponseCommentCreator(responseTemplate);
+        String footerTemplate = Files.toString(new File("resources/footer-template"), Charset.defaultCharset());
+        ResponseCommentCreator responseCommentCreator = new ResponseCommentCreator(responseTemplate, footerTemplate);
         logger.trace("created response comment creator");
 
         AbstractRedditBot bot = new TweetsInCommentsBot(twitterConnector, redditConnector, parser,
-                redditProperties.getProperty("subreddits"), responseCommentCreator);
+                redditProperties.getProperty("subreddits"),
+                responseCommentCreator, Arrays.asList(redditProperties.getProperty("reddit-login"), "TweetPoster"));
         logger.trace("created bot");
 
 

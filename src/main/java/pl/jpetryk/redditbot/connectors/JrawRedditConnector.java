@@ -115,8 +115,6 @@ public class JrawRedditConnector implements RedditConnectorInterface {
 
     public static class Builder {
 
-        private static final String FIELD_IS_EMPTY_MESSAGE = "Mandatory field %s is not set.";
-
         private String userAgent;
         private String login;
         private String clientId;

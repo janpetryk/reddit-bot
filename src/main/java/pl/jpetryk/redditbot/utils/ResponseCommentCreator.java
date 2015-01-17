@@ -1,12 +1,9 @@
 package pl.jpetryk.redditbot.utils;
 
-import net.dean.jraw.http.RestResponse;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import pl.jpetryk.redditbot.model.Tweet;
 
-import java.lang.reflect.Array;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -14,23 +11,36 @@ import java.util.List;
  */
 public class ResponseCommentCreator {
 
-    private String template;
+    private String tweetResponseTemplate;
+    private String footerTemplate;
 
-    public ResponseCommentCreator(String template) {
-        this.template = template;
+    public ResponseCommentCreator(String tweetResponseTemplate, String footerTemplate) {
+        this.tweetResponseTemplate = tweetResponseTemplate;
+        this.footerTemplate = footerTemplate;
     }
 
-    public String createResponseComment(Tweet tweet) {
-        template = template.replace("${posterScreenName}", tweet.getPosterScreenName());
-        template = template.replace("${posterProfileUrl}", tweet.getPosterProfileUrl());
-        template = template.replace("${datePosted}", convertDateToString(tweet.getDatePosted()));
-        template = template.replace("${tweetUrl}", tweet.getTweetUrl());
-        template = template.replace("${body}", tweet.getBody());
-        return template;
+    private String createResponseComment(Tweet tweet) {
+        String result = tweetResponseTemplate;
+        result = result.replace("${posterScreenName}", tweet.getPosterScreenName());
+        result = result.replace("${posterProfileUrl}", tweet.getPosterProfileUrl());
+        result = result.replace("${datePosted}",
+                convertDateToString(tweet.getDatePosted()));
+        result = result.replace("${tweetUrl}", tweet.getTweetUrl());
+        result = result.replace("${body}", tweet.getBody());
+        return result;
     }
 
-    private String convertDateToString(DateTime dateTime){
-        return dateTime.toDateTime(DateTimeZone.UTC).toString("yyyy-MM-dd HH-mm-ss zzz");
+    public String createResponseComment(List<Tweet> tweetList) {
+        String result = "";
+        for (Tweet tweet : tweetList) {
+            result += createResponseComment(tweet);
+        }
+        result += footerTemplate;
+        return result;
+    }
+
+    private String convertDateToString(DateTime dateTime) {
+        return dateTime.toDateTime(DateTimeZone.UTC).toString("yyyy-MM-dd HH:mm:ss zzz");
     }
 
 

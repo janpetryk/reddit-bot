@@ -12,7 +12,6 @@ import pl.jpetryk.redditbot.model.Comment;
 import pl.jpetryk.redditbot.model.PostCommentResult;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -63,8 +62,8 @@ public class AbstractRedditBotTest {
         }
 
         @Override
-        protected List<String> responseMessages(Comment comment) throws Exception {
-            return Arrays.asList(comment.getCommentId());
+        protected String responseMessage(Comment comment) throws Exception {
+            return comment.getCommentId();
         }
 
 
