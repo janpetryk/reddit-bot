@@ -11,43 +11,25 @@ import java.util.regex.Pattern;
  */
 public class CommentParser {
 
+    private Pattern pattern;
 
-    private List<String> regexList;
-    private List<String> commentContainsStringList;
-
-    public static final String TWITTER_LONG_URL_PATTERN = ("https?:\\/\\/twitter\\.com\\/(?:#!\\/)?(\\w+)\\/status(es)?\\/(\\d+)");
-
-    public static final List<String> TWITTER_PATTERN_LIST;
-
-    static {
-        TWITTER_PATTERN_LIST = Arrays.asList(TWITTER_LONG_URL_PATTERN);
+    public CommentParser(String regex) {
+        this.pattern = Pattern.compile(regex);
     }
 
-    public CommentParser() {
+
+    public boolean commentMatchesRegex(Comment comment) {
+        return pattern.matcher(comment.getBody()).find();
     }
 
-    ;
 
-    public static boolean commentContainsTwitterLink(Comment comment) {
-        for (String regex : TWITTER_PATTERN_LIST) {
-            Pattern pattern = Pattern.compile(regex);
-            if (pattern.matcher(comment.getBody()).find()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public static Set<String> getTwitterLinksFromComment(Comment comment) {
+    public Set<String> getRegexGroup(Comment comment, int groupId) {
         Set<String> twitterLinks = new HashSet<>();
-        for (String regex : TWITTER_PATTERN_LIST) {
-            Matcher matcher = Pattern.compile(regex).matcher(comment.getBody());
-            while (matcher.find()) {
-                twitterLinks.add(matcher.group());
-            }
+        Matcher matcher = pattern.matcher(comment.getBody());
+        while (matcher.find()) {
+            twitterLinks.add(matcher.group(groupId));
         }
         return twitterLinks;
     }
-
 
 }

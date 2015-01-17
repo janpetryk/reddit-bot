@@ -1,6 +1,7 @@
 package pl.jpetryk.redditbot.utils;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import pl.jpetryk.redditbot.model.Comment;
 
@@ -9,21 +10,31 @@ import pl.jpetryk.redditbot.model.Comment;
  */
 public class CommentParserTest {
 
-    private static final String LONG_STATUS_URL_1 = "https://twitter.com/peterritchie/status/534011965132120064";
-    private static final String LONG_STATUS_URL_2 = "https://twitter.com/unidanbiology/status/494683729735196673";
+    private static final String STATUS_1_ID = "534011965132120064";
+    private static final String LONG_STATUS_URL_1 = "https://twitter.com/peterritchie/status/" + STATUS_1_ID;
+    private static final String STATUS_2_ID = "494683729735196673";
+    private static final String LONG_STATUS_URL_2 = "https://twitter.com/unidanbiology/status/" + STATUS_2_ID;
+    private CommentParser parser;
+    private PropertiesReader properties = new PropertiesReader("resources/twitter.properties");
+
+    @Before
+    public void init() {
+        parser = new CommentParser(properties.getProperty("twitter-status-regex"));
+    }
+
 
     @Test
     public void testCommentContainsLongTwitterLinkInTheMiddle() {
         String body = "asdadsaddasddsad" + LONG_STATUS_URL_1 + " asdasdasdasd";
         assertCommentContainsTwitterLink(body);
-        assertSelectedLinkIsEqualToGiven(body, LONG_STATUS_URL_1);
+        assertSelectedGroupIsEqualToGiven(body, STATUS_1_ID);
     }
 
     @Test
     public void testCommentContainsLongTwitterLinkInTheBeginning() {
         String body = LONG_STATUS_URL_1 + "asdasdsa";
         assertCommentContainsTwitterLink(body);
-        assertSelectedLinkIsEqualToGiven(body, LONG_STATUS_URL_1);
+        assertSelectedGroupIsEqualToGiven(body, STATUS_1_ID);
 
     }
 
@@ -31,7 +42,7 @@ public class CommentParserTest {
     public void testCommentContainsLongTwitterLinkInTheEnd() {
         String body = "asdadadsadsasd" + LONG_STATUS_URL_1;
         assertCommentContainsTwitterLink(body);
-        assertSelectedLinkIsEqualToGiven(body, LONG_STATUS_URL_1);
+        assertSelectedGroupIsEqualToGiven(body, STATUS_1_ID);
 
     }
 
@@ -39,33 +50,33 @@ public class CommentParserTest {
     public void testCommentContainsOnlyLongTwitterLink() {
         String body = LONG_STATUS_URL_1;
         assertCommentContainsTwitterLink(body);
-        assertSelectedLinkIsEqualToGiven(body, LONG_STATUS_URL_1);
+        assertSelectedGroupIsEqualToGiven(body, STATUS_1_ID);
     }
 
     @Test
     public void testCommentDoesNotContainTwitterLink() {
         String body = "asdadsasdads";
         Comment comment = prepareComment(body);
-        Assert.assertFalse(CommentParser.commentContainsTwitterLink(comment));
-        Assert.assertEquals(0, CommentParser.getTwitterLinksFromComment(comment).size());
+        Assert.assertFalse(parser.commentMatchesRegex(comment));
+        Assert.assertEquals(0, parser.getRegexGroup(comment, 3).size());
     }
 
     @Test
     public void testMultipleLinksInOneComment() {
         String body = "asdasdasdasd" + LONG_STATUS_URL_1 + "asdadsasdasd" + LONG_STATUS_URL_2;
         assertCommentContainsTwitterLink(body);
-        assertSelectedLinkIsEqualToGiven(body,LONG_STATUS_URL_1);
-        assertSelectedLinkIsEqualToGiven(body,LONG_STATUS_URL_2);
+        assertSelectedGroupIsEqualToGiven(body, STATUS_1_ID);
+        assertSelectedGroupIsEqualToGiven(body, STATUS_2_ID);
     }
 
 
     private void assertCommentContainsTwitterLink(String body) {
         Comment comment = prepareComment(body);
-        Assert.assertTrue(CommentParser.commentContainsTwitterLink(comment));
+        Assert.assertTrue(parser.commentMatchesRegex(comment));
     }
 
-    private void assertSelectedLinkIsEqualToGiven(String body, String twitterLink) {
-        for (String string : CommentParser.getTwitterLinksFromComment(prepareComment(body))) {
+    private void assertSelectedGroupIsEqualToGiven(String body, String twitterLink) {
+        for (String string : parser.getRegexGroup(prepareComment(body), 3)) {
             if (twitterLink.equals(string)) {
                 return;
             }
