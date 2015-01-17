@@ -1,9 +1,9 @@
 package pl.jpetryk.redditbot.connectors;
 
-import org.junit.Assert;
+import static org.junit.Assert.*;
+
 import org.junit.Test;
 import pl.jpetryk.redditbot.model.PostCommentResult;
-import pl.jpetryk.redditbot.model.RedditLoggedInAccountInterface;
 import pl.jpetryk.redditbot.utils.PropertiesReader;
 import pl.jpetryk.redditbot.exceptions.NetworkConnectionException;
 import pl.jpetryk.redditbot.exceptions.RedditApiException;
@@ -16,48 +16,58 @@ import java.util.List;
  */
 public abstract class AbstractRedditConnectorITCase<T extends RedditConnectorInterface> {
 
-    protected abstract T createInstance();
+    protected abstract T createValidInstance() throws NetworkConnectionException, RedditApiException;
 
-    private PropertiesReader testProperties = new PropertiesReader("testbot.properties");
+    protected abstract T createInvalidInstance() throws NetworkConnectionException, RedditApiException;
 
-    protected T connector = createInstance();
+    protected PropertiesReader testProperties = new PropertiesReader("resources/testbot.properties");
 
-    @Test
-    public void testLoginWithValidCredentials() throws RedditApiException, NetworkConnectionException {
-        Assert.assertNotNull(loginStandard());
-    }
+    protected T connector;
+
 
     @Test
-    public void testLoginWithInvalidCredentials() throws NetworkConnectionException {
-        String login = testProperties.getProperty("reddit-login");
-        String password = "asdasd";
+    public void testLoginWithValidCredentials() throws NetworkConnectionException {
         try {
-            connector.loginStandard(login, password);
+            connector = createValidInstance();
         } catch (RedditApiException e) {
-            Assert.assertEquals("WRONG_PASSWORD", e.getReason());
+            fail();
         }
     }
 
-    @Test
-    public void testLoginOAuthWithValidCredentials() throws NetworkConnectionException, RedditApiException {
-        Assert.assertNotNull(loginOAuth());
+    @Test(expected = RedditApiException.class)
+    public void testLoginWithInvalidCredentials() throws NetworkConnectionException, RedditApiException {
+        createInvalidInstance();
     }
 
+
     @Test
-    public void testGetNewestSubredditComments() throws NetworkConnectionException {
-        int requestedNumberOfComments = 100;
+    public void testGetNewestSubredditComments() throws NetworkConnectionException, RedditApiException {
+        connector = createValidInstance();
         List<Comment> commentList = connector.getNewestSubredditComments("all");
-        Assert.assertEquals(requestedNumberOfComments, commentList.size());
+        assertEquals(RedditConnectorInterface.MAX_COMMENTS_PER_REQUEST, commentList.size());
+        for (Comment comment : commentList) {
+            assertAllFieldsAreSet(comment);
+        }
+    }
+
+    private void assertAllFieldsAreSet(Comment comment) {
+        assertNotNull(comment.getCreated());
+        assertNotNull(comment.getAuthor());
+        assertNotNull(comment.getBody());
+        assertNotNull(comment.getCommentFullName());
+        assertNotNull(comment.getCommentId());
+        assertNotNull(comment.getLinkId());
+        assertNotNull(comment.getLinkUrl());
     }
 
     @Test
     public void testPostComment() throws NetworkConnectionException, RedditApiException {
-        RedditLoggedInAccountInterface user = loginStandard();
+        connector = createValidInstance();
         String message = "This is bot integration test message. Please ignore.";
         Comment commentToReply = prepareTestCommentToReply();
-        PostCommentResult result = connector.replyToComment(user, commentToReply.getCommentFullName(), message);
-        Assert.assertTrue(result.isSuccess());
-        Assert.assertEquals(message, getCommentBody(result.getResponseCommentId(),
+        PostCommentResult result = connector.replyToComment(commentToReply.getCommentFullName(), message);
+        assertTrue("Could not post test comment, possible reddit api ratelimit", result.isSuccess());
+        assertEquals(message, getCommentBody(result.getResponseCommentId(),
                 testProperties.getProperty("comment-to-reply-link-id")));
     }
 
@@ -71,24 +81,6 @@ public abstract class AbstractRedditConnectorITCase<T extends RedditConnectorInt
      * @throws NetworkConnectionException
      */
     protected abstract String getCommentBody(String commentId, String linkId) throws NetworkConnectionException;
-
-    protected String getUserAgent() {
-        return testProperties.getProperty("reddit-useragent");
-    }
-
-    protected RedditLoggedInAccountInterface loginStandard() throws RedditApiException, NetworkConnectionException {
-        String login = testProperties.getProperty("reddit-login");
-        String password = testProperties.getProperty("reddit-password");
-        return connector.loginStandard(login, password);
-    }
-
-    protected RedditLoggedInAccountInterface loginOAuth() throws NetworkConnectionException, RedditApiException {
-        String login = testProperties.getProperty("reddit-login");
-        String password = testProperties.getProperty("reddit-password");
-        String clientId = testProperties.getProperty("reddit-client-id");
-        String clientSecret = testProperties.getProperty("reddit-client-secret");
-        return connector.loginOAuth(login, password, clientId, clientSecret);
-    }
 
     protected Comment prepareTestCommentToReply() {
         return new Comment.Builder().linkId(testProperties.getProperty("comment-to-reply-link-id"))
