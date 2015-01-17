@@ -8,7 +8,9 @@ import org.joda.time.DateTime;
  */
 public class Tweet {
 
-    private String id;
+    private static final String TWITTER_URL = "https://twitter.com/";
+
+    private long id;
     private String body;
     private String poster;
     private DateTime datePosted;
@@ -20,7 +22,7 @@ public class Tweet {
         this.datePosted = builder.datePosted;
     }
 
-    public String getId() {
+    public long getId() {
         return id;
     }
 
@@ -28,12 +30,20 @@ public class Tweet {
         return body;
     }
 
-    public String getPoster() {
+    public String getPosterScreenName() {
         return poster;
     }
 
     public DateTime getDatePosted() {
         return datePosted;
+    }
+
+    public String getPosterProfileUrl() {
+        return TWITTER_URL + poster + "/";
+    }
+
+    public String getTweetUrl() {
+        return getPosterProfileUrl() + "status/" + id;
     }
 
     @Override
@@ -43,23 +53,23 @@ public class Tweet {
 
         Tweet tweet = (Tweet) o;
 
-        if (id != null ? !id.equals(tweet.id) : tweet.id != null) return false;
+        if (id != tweet.id) return false;
 
         return true;
     }
 
     @Override
     public int hashCode() {
-        return id != null ? id.hashCode() : 0;
+        return (int) (id ^ (id >>> 32));
     }
 
     public static class Builder {
-        private String id;
+        private long id;
         private String body;
         private String poster;
         private DateTime datePosted;
 
-        public Builder id(String id) {
+        public Builder id(long id) {
             this.id = id;
             return this;
         }
