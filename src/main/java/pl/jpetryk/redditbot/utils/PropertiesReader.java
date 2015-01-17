@@ -5,6 +5,7 @@ import org.apache.log4j.Logger;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -15,20 +16,19 @@ public class PropertiesReader {
 
     private static final Logger logger = Logger.getLogger(PropertiesReader.class);
     public static final String DEFAULT_VALUE = "";
-    /*package*/ static final String CONFIG_FOLDER = "config/";
 
     private Properties properties;
     private String fileName;
 
     /**
-     * @param fileName - name of a file in config directory
+     * @param filePath - path to properties file
      */
-    public PropertiesReader(String fileName) {
-        this.fileName = fileName;
+    public PropertiesReader(String filePath) {
+        this.fileName = filePath;
         try {
-            properties = openPropertyFile(fileName);
+            properties = openPropertyFile(filePath);
         } catch (IOException e) {
-            String message = "Could not open property file: " + fileName;
+            String message = "Could not open property file: " + filePath;
             logger.error(message);
             throw new RuntimeException(message);
         }
@@ -42,11 +42,15 @@ public class PropertiesReader {
         return result;
     }
 
-    private Properties openPropertyFile(String fileName) throws IOException {
-        InputStream inputStream = new FileInputStream(CONFIG_FOLDER + fileName);
+    private Properties openPropertyFile(String filePath) throws IOException {
+        InputStream inputStream = new FileInputStream(filePath);
         Properties properties = new Properties();
         properties.load(inputStream);
         inputStream.close();
         return properties;
+    }
+
+    public Properties getProperties() {
+        return new Properties(properties);
     }
 }
