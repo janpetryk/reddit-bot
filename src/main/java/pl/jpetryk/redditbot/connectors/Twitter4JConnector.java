@@ -4,10 +4,7 @@ import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
 import pl.jpetryk.redditbot.exceptions.TwitterApiException;
 import pl.jpetryk.redditbot.model.Tweet;
-import twitter4j.Status;
-import twitter4j.Twitter;
-import twitter4j.TwitterException;
-import twitter4j.TwitterFactory;
+import twitter4j.*;
 import twitter4j.conf.ConfigurationBuilder;
 
 /**
@@ -32,8 +29,9 @@ public class Twitter4JConnector implements TwitterConnectorInterface {
     public Tweet showStatus(Long id) throws TwitterApiException {
         try {
             Status status = twitter.showStatus(id);
+
             return new Tweet.Builder()
-                    .body(status.getText())
+                    .body(prepareTweetBody(status))
                     .datePosted(new DateTime(status.getCreatedAt()))
                     .id(id)
                     .poster(status.getUser().getScreenName())
@@ -41,6 +39,17 @@ public class Twitter4JConnector implements TwitterConnectorInterface {
         } catch (TwitterException e) {
             throw new TwitterApiException();
         }
+    }
+
+    private String prepareTweetBody(Status status) {
+        String tweetBody = status.getText();
+        for (URLEntity urlEntity : status.getURLEntities()) {
+            tweetBody = tweetBody.replace(urlEntity.getURL(), urlEntity.getExpandedURL());
+        }
+        for (MediaEntity mediaEntity : status.getMediaEntities()) {
+            tweetBody = tweetBody.replace(mediaEntity.getURL(), mediaEntity.getMediaURL());
+        }
+        return tweetBody;
     }
 
     public static class Builder {
