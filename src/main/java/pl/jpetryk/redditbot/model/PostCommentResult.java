@@ -29,10 +29,6 @@ public class PostCommentResult {
         return successful;
     }
 
-    public boolean isRateLimitError() {
-        return errorMessage != null && getErrorMessage().contains("RATELIMIT");
-    }
-
     public String getResponseCommentId() {
         return responseCommentId;
     }
