@@ -84,44 +84,38 @@ public class AbstractRedditBotTest {
 
 
     @Test
-    public void testAddMatchingCommentsToWaitingQueue() throws NetworkConnectionException {
+    public void testAddMatchingCommentsToWaitingQueue() throws Exception {
         List<Comment> commentList = connector.getNewestSubredditComments(SUBREDDIT_NAME);
         bot.addMatchingCommentsToWaitingQueue(commentList);
         for (Comment comment : commentList) {
             assertTrue(bot.buffer.contains(comment));
-            try {
-                if (bot.shouldRespondToComment(comment)) {
-                    assertTrue(bot.commentToRespondMap.keySet().contains(comment));
-                } else {
-                    assertFalse(bot.commentToRespondMap.keySet().contains(comment));
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
+            if (bot.shouldRespondToComment(comment)) {
+                assertTrue(bot.commentToRespondQueue.contains(comment));
+            } else {
+                assertFalse(bot.commentToRespondQueue.contains(comment));
             }
         }
     }
 
     @Test
-    public void testRespondToMatchingCommentsWithValidResponse() throws NetworkConnectionException, RedditApiException {
+    public void testRespondToMatchingCommentsWithValidResponse() throws Exception {
         connector.resultToReturn = PostCommentResult.successful("");
         List<Comment> commentList = connector.getNewestSubredditComments(SUBREDDIT_NAME);
         bot.sortByDateInAscendingOrder(commentList);
         bot.addMatchingCommentsToWaitingQueue(commentList);
         bot.respondToMatchingComments();
-        assertTrue(bot.commentToRespondMap.isEmpty());
+        assertTrue(bot.commentToRespondQueue.isEmpty());
         assertEquals(NUMBER_OF_COMMENTS_TO_RESPOND, connector.replyToCommentMethodCallCount);
     }
 
     @Test
-    public void testRespondToMatchingCommentsWithInvalidResponse() throws NetworkConnectionException, RedditApiException {
+    public void testRespondToMatchingCommentsWithInvalidResponse() throws Exception {
         connector.resultToReturn = PostCommentResult.unsuccessful("RATELIMIT");
         List<Comment> commentList = connector.getNewestSubredditComments(SUBREDDIT_NAME);
         bot.sortByDateInAscendingOrder(commentList);
         bot.addMatchingCommentsToWaitingQueue(commentList);
         bot.respondToMatchingComments();
-        //after first invalid response bot should stop trying to post more comments
-        assertEquals(NUMBER_OF_COMMENTS_TO_RESPOND, bot.commentToRespondMap.size());
-        assertEquals(1, connector.replyToCommentMethodCallCount);
+        assertEquals(NUMBER_OF_COMMENTS_TO_RESPOND, bot.commentToRespondQueue.size());
     }
 
 

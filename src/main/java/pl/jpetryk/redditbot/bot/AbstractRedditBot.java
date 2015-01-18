@@ -1,15 +1,13 @@
 package pl.jpetryk.redditbot.bot;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
 import org.apache.log4j.Logger;
-import pl.jpetryk.redditbot.exceptions.NetworkConnectionException;
 import pl.jpetryk.redditbot.exceptions.RedditApiException;
 import pl.jpetryk.redditbot.model.*;
 import pl.jpetryk.redditbot.connectors.RedditConnectorInterface;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * Created by Jan on 05/01/15.
@@ -21,18 +19,21 @@ public abstract class AbstractRedditBot implements Runnable {
     protected Logger logger = Logger.getLogger(this.getClass());
 
     @VisibleForTesting
-    Map<Comment, String> commentToRespondMap;
+    Queue<Comment> commentToRespondQueue;
 
     @VisibleForTesting
     Buffer<Comment> buffer;
+
+    private Thread responseThread;
 
     private String subreddits;
 
     public AbstractRedditBot(RedditConnectorInterface connector, String subreddits) {
         this.connector = connector;
         this.subreddits = subreddits;
-        commentToRespondMap = new HashMap<>();
+        commentToRespondQueue = new ConcurrentLinkedQueue<>();
         buffer = new Buffer<>(2 * RedditConnectorInterface.MAX_COMMENTS_PER_REQUEST);
+        responseThread = prepareResponseThread();
     }
 
     protected abstract boolean shouldRespondToComment(Comment comment) throws Exception;
@@ -46,10 +47,13 @@ public abstract class AbstractRedditBot implements Runnable {
             List<Comment> commentList = connector.getNewestSubredditComments(subreddits);
             sortByDateInAscendingOrder(commentList);
             addMatchingCommentsToWaitingQueue(commentList);
-            respondToMatchingComments();
+            if (!responseThread.isAlive()) {
+                responseThread.run();
+            }
             logger.trace("Comments processed: " + buffer.itemsAdded() + ". Waiting queue size: " +
-                    commentToRespondMap.size());
-            if(buffer.itemsAdded() - startingNumberOfItems == connector.MAX_COMMENTS_PER_REQUEST){
+                    commentToRespondQueue.size());
+            if (buffer.itemsAdded() - startingNumberOfItems == RedditConnectorInterface.MAX_COMMENTS_PER_REQUEST &&
+                    startingNumberOfItems != 0) {
                 logger.warn("It is possible that some comments might be not processed. Try running bot more frequently");
             }
         } catch (RedditApiException e) {
@@ -59,12 +63,25 @@ public abstract class AbstractRedditBot implements Runnable {
         }
     }
 
+    private Thread prepareResponseThread() {
+        return new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    respondToMatchingComments();
+                } catch (Exception e) {
+                    logger.error(e.getMessage());
+                }
+            }
+        });
+    }
+
     @VisibleForTesting
-    void respondToMatchingComments() throws NetworkConnectionException, RedditApiException {
-        Iterator<Comment> iterator = commentToRespondMap.keySet().iterator();
+    void respondToMatchingComments() throws Exception {
+        Iterator<Comment> iterator = commentToRespondQueue.iterator();
         while (iterator.hasNext()) {
             Comment commentToRespond = iterator.next();
-            String responseMessage = commentToRespondMap.get(commentToRespond);
+            String responseMessage = responseMessage(commentToRespond);
             PostCommentResult result = connector.replyToComment(commentToRespond.getCommentFullName(),
                     responseMessage);
             if (result.isSuccess()) {
@@ -72,30 +89,19 @@ public abstract class AbstractRedditBot implements Runnable {
                 logger.info("Successfully responded to comment " + commentToRespond.getCommentId() +
                         ". Response id: " + result.getResponseCommentId());
             } else {
-                logger.info("Could not respond to a comment. Reason: " + result.getErrorMessage());
-                if (result.isRateLimitError()) {
-                    // if this is a reddit api rate limit error then there is no point in continuing  - try next
-                    // iteration. If on the other hand it is not, then try to post another comments, because this one
-                    // can be corrupted in other way (for example deleted)
-                    return;
-                }
+                logger.trace("Could not respond to a comment. Reason: " + result.getErrorMessage());
             }
         }
     }
 
     @VisibleForTesting
-    void addMatchingCommentsToWaitingQueue(List<Comment> commentList) {
+    void addMatchingCommentsToWaitingQueue(List<Comment> commentList) throws Exception {
         for (Comment comment : commentList) {
             if (!buffer.contains(comment)) {
                 buffer.add(comment);
-                try {
-                    if (shouldRespondToComment(comment)) {
-                        String responseMessage = responseMessage(comment);
-                        commentToRespondMap.put(comment, responseMessage);
-                        logger.info("Added comment with id " + comment.getCommentId() + " to waiting to respond queue");
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
+                if (shouldRespondToComment(comment)) {
+                    commentToRespondQueue.add(comment);
+                    logger.info("Added comment with id " + comment.getCommentId() + " to waiting to respond queue");
                 }
             }
         }

@@ -68,7 +68,7 @@ public class Runner {
 
         while (true) {
             bot.run();
-            Thread.sleep(1000);
+            Thread.sleep(2000);
         }
     }
 
