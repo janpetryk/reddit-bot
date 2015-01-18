@@ -26,7 +26,8 @@ public class ResponseCommentCreator {
         result = result.replace("${datePosted}",
                 convertDateToString(tweet.getDatePosted()));
         result = result.replace("${tweetUrl}", tweet.getTweetUrl());
-        result = result.replace("${body}", tweet.getBody());
+        String body = tweet.getBody().replace("\n", "\n> ");
+        result = result.replace("${body}", body);
         return result;
     }
 
