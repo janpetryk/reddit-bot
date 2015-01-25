@@ -20,15 +20,37 @@ public class ResponseCommentCreator {
     }
 
     private String createResponseComment(Tweet tweet) {
-        String result = tweetResponseTemplate;
-        result = result.replace("${posterScreenName}", tweet.getPosterScreenName());
-        result = result.replace("${posterProfileUrl}", tweet.getPosterProfileUrl());
-        result = result.replace("${datePosted}",
+        StringBuilder result = new StringBuilder(tweetResponseTemplate);
+        replaceAll(result, "${posterScreenName}", tweet.getPosterScreenName());
+        replaceAll(result, "${posterProfileUrl}", tweet.getPosterProfileUrl());
+        replaceAll(result, "${datePosted}",
                 convertDateToString(tweet.getDatePosted()));
-        result = result.replace("${tweetUrl}", tweet.getTweetUrl());
-        String body = tweet.getBody().replace("\n", "\n> ");
-        result = result.replace("${body}", body);
-        return result;
+        replaceAll(result, "${tweetUrl}", tweet.getTweetUrl());
+        replaceAll(result, "${body}", prepareTweetBody(tweet));
+        return result.toString();
+    }
+
+    private String prepareTweetBody(Tweet tweet) {
+        StringBuilder tweetStringBuilder = new StringBuilder(tweet.getBody());
+        replaceAll(tweetStringBuilder, "\n", "\n> ");
+        replaceAll(tweetStringBuilder, "#", "\\#");
+        replaceAll(tweetStringBuilder, "^", "\\^");
+        for (String string : tweet.getMediaEntities().keySet()) {
+            replaceAll(tweetStringBuilder, string, tweet.getMediaEntities().get(string));
+        }
+        for (String string : tweet.getUrlEntities().keySet()) {
+            replaceAll(tweetStringBuilder, string, tweet.getUrlEntities().get(string));
+        }
+        return tweetStringBuilder.toString();
+    }
+
+    private void replaceAll(StringBuilder builder, String from, String to) {
+        int index = builder.indexOf(from);
+        while (index != -1) {
+            builder.replace(index, index + from.length(), to);
+            index += to.length();
+            index = builder.indexOf(from, index);
+        }
     }
 
     public String createResponseComment(List<Tweet> tweetList) {

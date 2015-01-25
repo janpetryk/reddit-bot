@@ -13,8 +13,11 @@ import pl.jpetryk.redditbot.utils.PropertiesReader;
 import pl.jpetryk.redditbot.utils.ResponseCommentCreator;
 
 import java.io.File;
+import java.lang.reflect.Array;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created by Jan on 06/01/15.
@@ -60,15 +63,16 @@ public class Runner {
         ResponseCommentCreator responseCommentCreator = new ResponseCommentCreator(responseTemplate, footerTemplate);
         logger.trace("created response comment creator");
 
+        List<String> blacklist = new ArrayList<>(Arrays.asList(redditProperties.getProperty("blacklist").split(", ")));
+        blacklist.add(redditProperties.getProperty("reddit-login"));
         AbstractRedditBot bot = new TweetsInCommentsBot(twitterConnector, redditConnector, parser,
-                redditProperties.getProperty("subreddits"),
-                responseCommentCreator, Arrays.asList(redditProperties.getProperty("reddit-login"), "TweetPoster"));
+                redditProperties.getProperty("subreddits"), responseCommentCreator, blacklist);
         logger.trace("created bot");
 
 
         while (true) {
             bot.run();
-            Thread.sleep(2000);
+            Thread.sleep(Long.valueOf(redditProperties.getProperty("run-interval")));
         }
     }
 

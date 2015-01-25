@@ -1,6 +1,6 @@
 package pl.jpetryk.redditbot.connectors;
 
-import org.apache.log4j.Logger;
+
 import org.joda.time.DateTime;
 import pl.jpetryk.redditbot.exceptions.TwitterApiException;
 import pl.jpetryk.redditbot.model.Tweet;
@@ -13,7 +13,6 @@ import twitter4j.conf.ConfigurationBuilder;
 public class Twitter4JConnector implements TwitterConnectorInterface {
 
     private Twitter twitter;
-
 
     private Twitter4JConnector(Builder builder) {
         ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
@@ -29,28 +28,28 @@ public class Twitter4JConnector implements TwitterConnectorInterface {
     public Tweet showStatus(Long id) throws TwitterApiException {
         try {
             Status status = twitter.showStatus(id);
-
-            return new Tweet.Builder()
-                    .body(prepareTweetBody(status))
+            Tweet.Builder tweetBuilder = new Tweet.Builder()
+                    .body(status.getText())
                     .datePosted(new DateTime(status.getCreatedAt()))
                     .id(id)
-                    .poster(status.getUser().getScreenName())
-                    .build();
+                    .poster(status.getUser().getScreenName());
+            prepareEntities(status, tweetBuilder);
+            return tweetBuilder.build();
         } catch (TwitterException e) {
-            throw new TwitterApiException();
+            throw new TwitterApiException(e, e.exceededRateLimitation(),
+                    e.getRateLimitStatus().getSecondsUntilReset() * 1000);
         }
     }
 
-    private String prepareTweetBody(Status status) {
-        String tweetBody = status.getText();
+    private void prepareEntities(Status status, Tweet.Builder tweetBuilder) {
         for (URLEntity urlEntity : status.getURLEntities()) {
-            tweetBody = tweetBody.replace(urlEntity.getURL(), urlEntity.getExpandedURL());
+            tweetBuilder.addUrlEntity(urlEntity.getURL(), urlEntity.getExpandedURL());
         }
         for (MediaEntity mediaEntity : status.getMediaEntities()) {
-            tweetBody = tweetBody.replace(mediaEntity.getURL(), mediaEntity.getMediaURL());
+            tweetBuilder.addMediaEntity(mediaEntity.getURL(), mediaEntity.getMediaURL());
         }
-        return tweetBody;
     }
+
 
     public static class Builder {
         private String apiKey;

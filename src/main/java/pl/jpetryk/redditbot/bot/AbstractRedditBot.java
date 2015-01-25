@@ -2,11 +2,12 @@ package pl.jpetryk.redditbot.bot;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.log4j.Logger;
-import pl.jpetryk.redditbot.exceptions.RedditApiException;
+import pl.jpetryk.redditbot.exceptions.NetworkConnectionException;
 import pl.jpetryk.redditbot.model.*;
 import pl.jpetryk.redditbot.connectors.RedditConnectorInterface;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
@@ -19,102 +20,130 @@ public abstract class AbstractRedditBot implements Runnable {
     protected Logger logger = Logger.getLogger(this.getClass());
 
     @VisibleForTesting
-    Queue<Comment> commentToRespondQueue;
+    Map<Comment, String> commentToRespondMap;
 
     @VisibleForTesting
-    Buffer<Comment> buffer;
+    Buffer<Comment> processedCommentsBuffer;
+
+    @VisibleForTesting
+    Queue<Comment> fetchedCommentQueue;
 
     private Thread responseThread;
+
+    private Thread processCommentsThread;
+
 
     private String subreddits;
 
     public AbstractRedditBot(RedditConnectorInterface connector, String subreddits) {
         this.connector = connector;
         this.subreddits = subreddits;
-        commentToRespondQueue = new ConcurrentLinkedQueue<>();
-        buffer = new Buffer<>(2 * RedditConnectorInterface.MAX_COMMENTS_PER_REQUEST);
+        commentToRespondMap = new ConcurrentHashMap<>();
+        processedCommentsBuffer = new Buffer<>(10 * RedditConnectorInterface.MAX_COMMENTS_PER_REQUEST);
         responseThread = prepareResponseThread();
+        processCommentsThread = prepareProcessCommentsThread();
+        fetchedCommentQueue = new ConcurrentLinkedQueue<>();
     }
 
-    protected abstract boolean shouldRespondToComment(Comment comment) throws Exception;
-
-    protected abstract String responseMessage(Comment comment) throws Exception;
+    protected abstract ProcessCommentResult processComment(Comment comment) throws Exception;
 
     @Override
     public void run() {
         try {
-            int startingNumberOfItems = buffer.itemsAdded();
-            List<Comment> commentList = connector.getNewestSubredditComments(subreddits);
-            sortByDateInAscendingOrder(commentList);
-            addMatchingCommentsToWaitingQueue(commentList);
-            if (!responseThread.isAlive()) {
-                responseThread.run();
+            int startingNumberOfItems = processedCommentsBuffer.itemsAdded();
+            getUniqueNewestComments();
+            if (!fetchedCommentQueue.isEmpty() && !processCommentsThread.isAlive()) {
+                processCommentsThread = prepareProcessCommentsThread();
+                processCommentsThread.start();
             }
-            logger.trace("Comments processed: " + buffer.itemsAdded() + ". Waiting queue size: " +
-                    commentToRespondQueue.size());
-            if (buffer.itemsAdded() - startingNumberOfItems == RedditConnectorInterface.MAX_COMMENTS_PER_REQUEST &&
+            if (!commentToRespondMap.isEmpty() && !responseThread.isAlive()) {
+                responseThread = prepareResponseThread();
+                responseThread.start();
+            }
+            logger.trace("Comments processed: " + processedCommentsBuffer.itemsAdded() + ".");
+            if (processedCommentsBuffer.itemsAdded() - startingNumberOfItems == RedditConnectorInterface.MAX_COMMENTS_PER_REQUEST &&
                     startingNumberOfItems != 0) {
                 logger.warn("It is possible that some comments might be not processed. Try running bot more frequently");
             }
-        } catch (RedditApiException e) {
-            logger.warn(e.getMessage());
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            logger.error(e);
         }
     }
+
+    @VisibleForTesting
+    void getUniqueNewestComments() throws NetworkConnectionException {
+        List<Comment> commentList = connector.getNewestSubredditComments(subreddits);
+        for (Comment comment : commentList) {
+            if (!processedCommentsBuffer.contains(comment)) {
+                processedCommentsBuffer.add(comment);
+                fetchedCommentQueue.add(comment);
+            }
+        }
+    }
+
+
+    @VisibleForTesting
+    void respondToMatchingComments() {
+        Iterator<Map.Entry<Comment, String>> iterator = commentToRespondMap.entrySet().iterator();
+        while (iterator.hasNext()) {
+            try {
+                Map.Entry<Comment, String> entry = iterator.next();
+                Comment commentToRespond = entry.getKey();
+                String responseMessage = entry.getValue();
+                PostCommentResult result = connector.replyToComment(commentToRespond.getCommentFullName(),
+                        responseMessage);
+                if (result.isSuccess()) {
+                    logger.info("Successfully responded to comment " + commentToRespond.getCommentId() +
+                            ". Response id: " + result.getResponseCommentId());
+                } else {
+                    logger.warn("Could not respond to a comment. Reason: " + result.getErrorMessage());
+                }
+                if (result.shouldBeDeleted()) {
+                    iterator.remove();
+                }
+            } catch (Exception e) {
+                logger.error(e);
+            }
+        }
+    }
+
+
+    @VisibleForTesting
+    void addMatchingCommentsToWaitingQueue() {
+        try {
+            while (!fetchedCommentQueue.isEmpty()) {
+                Comment comment = fetchedCommentQueue.element();
+                ProcessCommentResult parseResult = processComment(comment);
+                if (parseResult.shouldRespond()) {
+                    commentToRespondMap.put(comment, parseResult.getResponseMessage());
+                    logger.info("Added comment with id " + comment.getCommentId() + " to waiting to respond queue");
+                }
+                fetchedCommentQueue.remove();
+            }
+            logger.trace("Waiting queue size: " + commentToRespondMap.size() + ".");
+        } catch (Exception e) {
+            logger.error(e);
+        }
+    }
+
 
     private Thread prepareResponseThread() {
         return new Thread(new Runnable() {
             @Override
             public void run() {
-                try {
-                    respondToMatchingComments();
-                } catch (Exception e) {
-                    logger.error(e.getMessage());
-                }
+                respondToMatchingComments();
             }
         });
     }
 
-    @VisibleForTesting
-    void respondToMatchingComments() throws Exception {
-        Iterator<Comment> iterator = commentToRespondQueue.iterator();
-        while (iterator.hasNext()) {
-            Comment commentToRespond = iterator.next();
-            String responseMessage = responseMessage(commentToRespond);
-            PostCommentResult result = connector.replyToComment(commentToRespond.getCommentFullName(),
-                    responseMessage);
-            if (result.isSuccess()) {
-                iterator.remove();
-                logger.info("Successfully responded to comment " + commentToRespond.getCommentId() +
-                        ". Response id: " + result.getResponseCommentId());
-            } else {
-                logger.trace("Could not respond to a comment. Reason: " + result.getErrorMessage());
-            }
-        }
-    }
-
-    @VisibleForTesting
-    void addMatchingCommentsToWaitingQueue(List<Comment> commentList) throws Exception {
-        for (Comment comment : commentList) {
-            if (!buffer.contains(comment)) {
-                buffer.add(comment);
-                if (shouldRespondToComment(comment)) {
-                    commentToRespondQueue.add(comment);
-                    logger.info("Added comment with id " + comment.getCommentId() + " to waiting to respond queue");
-                }
-            }
-        }
-    }
-
-    @VisibleForTesting
-    void sortByDateInAscendingOrder(List<Comment> commentList) {
-        commentList.sort(new Comparator<Comment>() {
+    private Thread prepareProcessCommentsThread() {
+        return new Thread(new Runnable() {
             @Override
-            public int compare(Comment o1, Comment o2) {
-                return (int) (o1.getCreated().getMillis() - o2.getCreated().getMillis());
+            public void run() {
+                addMatchingCommentsToWaitingQueue();
             }
         });
     }
+
 
 }

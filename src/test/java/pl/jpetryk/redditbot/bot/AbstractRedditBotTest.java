@@ -9,6 +9,7 @@ import pl.jpetryk.redditbot.connectors.RedditConnectorInterface;
 import pl.jpetryk.redditbot.exceptions.NetworkConnectionException;
 import pl.jpetryk.redditbot.exceptions.RedditApiException;
 import pl.jpetryk.redditbot.model.Comment;
+import pl.jpetryk.redditbot.model.ProcessCommentResult;
 import pl.jpetryk.redditbot.model.PostCommentResult;
 
 import java.util.ArrayList;
@@ -57,13 +58,11 @@ public class AbstractRedditBotTest {
         }
 
         @Override
-        protected boolean shouldRespondToComment(Comment comment) throws Exception {
-            return Integer.valueOf(comment.getCommentId()) >= (NUMBER_OF_COMMENTS_TO_RESPOND);
-        }
-
-        @Override
-        protected String responseMessage(Comment comment) throws Exception {
-            return comment.getCommentId();
+        protected ProcessCommentResult processComment(Comment comment) throws Exception {
+            if (Integer.valueOf(comment.getCommentId()) >= (NUMBER_OF_COMMENTS_TO_RESPOND)) {
+                return ProcessCommentResult.respondWith(comment.getCommentId());
+            } else
+                return ProcessCommentResult.doNotRespond();
         }
 
 
@@ -72,50 +71,39 @@ public class AbstractRedditBotTest {
     private ConnectorMockImpl connector = new ConnectorMockImpl();
     private BotMockImpl bot = new BotMockImpl(connector, SUBREDDIT_NAME);
 
-    @Test
-    public void testSortComments() throws NetworkConnectionException {
-        List<Comment> commentList = connector.getNewestSubredditComments(SUBREDDIT_NAME);
-        bot.sortByDateInAscendingOrder(commentList);
-        for (int i = 1; i < NUMBER_OF_ALL_COMMENTS; i++) {
-            assertTrue(commentList.get(i).getCreated().getMillis()
-                    > commentList.get(i - 1).getCreated().getMillis());
-        }
-    }
-
 
     @Test
     public void testAddMatchingCommentsToWaitingQueue() throws Exception {
         List<Comment> commentList = connector.getNewestSubredditComments(SUBREDDIT_NAME);
-        bot.addMatchingCommentsToWaitingQueue(commentList);
+        bot.getUniqueNewestComments();
+        bot.addMatchingCommentsToWaitingQueue();
         for (Comment comment : commentList) {
-            assertTrue(bot.buffer.contains(comment));
-            if (bot.shouldRespondToComment(comment)) {
-                assertTrue(bot.commentToRespondQueue.contains(comment));
-            } else {
-                assertFalse(bot.commentToRespondQueue.contains(comment));
+            assertTrue(bot.processedCommentsBuffer.contains(comment));
+            ProcessCommentResult result = bot.processComment(comment);
+            if (result.shouldRespond()) {
+                assertTrue(bot.commentToRespondMap.containsKey(comment));
             }
         }
+        assertEquals(NUMBER_OF_COMMENTS_TO_RESPOND, bot.commentToRespondMap.size());
     }
 
     @Test
     public void testRespondToMatchingCommentsWithValidResponse() throws Exception {
         connector.resultToReturn = PostCommentResult.successful("");
-        List<Comment> commentList = connector.getNewestSubredditComments(SUBREDDIT_NAME);
-        bot.sortByDateInAscendingOrder(commentList);
-        bot.addMatchingCommentsToWaitingQueue(commentList);
+        bot.getUniqueNewestComments();
+        bot.addMatchingCommentsToWaitingQueue();
         bot.respondToMatchingComments();
-        assertTrue(bot.commentToRespondQueue.isEmpty());
+        assertTrue(bot.commentToRespondMap.isEmpty());
         assertEquals(NUMBER_OF_COMMENTS_TO_RESPOND, connector.replyToCommentMethodCallCount);
     }
 
     @Test
     public void testRespondToMatchingCommentsWithInvalidResponse() throws Exception {
         connector.resultToReturn = PostCommentResult.unsuccessful("RATELIMIT");
-        List<Comment> commentList = connector.getNewestSubredditComments(SUBREDDIT_NAME);
-        bot.sortByDateInAscendingOrder(commentList);
-        bot.addMatchingCommentsToWaitingQueue(commentList);
+        bot.getUniqueNewestComments();
+        bot.addMatchingCommentsToWaitingQueue();
         bot.respondToMatchingComments();
-        assertEquals(NUMBER_OF_COMMENTS_TO_RESPOND, bot.commentToRespondQueue.size());
+        assertEquals(NUMBER_OF_COMMENTS_TO_RESPOND, bot.commentToRespondMap.size());
     }
 
 

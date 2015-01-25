@@ -1,7 +1,11 @@
 package pl.jpetryk.redditbot.model;
 
 
+import com.google.common.collect.ImmutableMap;
 import org.joda.time.DateTime;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by Jan on 04/01/15.
@@ -14,12 +18,16 @@ public class Tweet {
     private String body;
     private String poster;
     private DateTime datePosted;
+    private Map<String, String> urlEntities;
+    private Map<String, String> mediaEntities;
 
     private Tweet(Builder builder) {
         this.id = builder.id;
         this.body = builder.body;
         this.poster = builder.poster;
         this.datePosted = builder.datePosted;
+        this.urlEntities = ImmutableMap.copyOf(builder.urlEntities);
+        this.mediaEntities = ImmutableMap.copyOf(builder.mediaEntities);
     }
 
     public long getId() {
@@ -46,6 +54,14 @@ public class Tweet {
         return getPosterProfileUrl() + "status/" + id;
     }
 
+    public Map<String, String> getMediaEntities() {
+        return mediaEntities;
+    }
+
+    public Map<String, String> getUrlEntities() {
+        return urlEntities;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -68,6 +84,13 @@ public class Tweet {
         private String body;
         private String poster;
         private DateTime datePosted;
+        private Map<String, String> urlEntities;
+        private Map<String, String> mediaEntities;
+
+        public Builder() {
+            urlEntities = new HashMap<>();
+            mediaEntities = new HashMap<>();
+        }
 
         public Builder id(long id) {
             this.id = id;
@@ -86,6 +109,16 @@ public class Tweet {
 
         public Builder datePosted(DateTime datePosted) {
             this.datePosted = datePosted;
+            return this;
+        }
+
+        public Builder addUrlEntity(String key, String value) {
+            urlEntities.put(key, value);
+            return this;
+        }
+
+        public Builder addMediaEntity(String key, String value) {
+            mediaEntities.put(key, value);
             return this;
         }
 

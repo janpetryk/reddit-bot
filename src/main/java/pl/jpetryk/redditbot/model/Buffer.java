@@ -10,10 +10,7 @@ import java.util.Queue;
  */
 public class Buffer<T> {
 
-    private static final Logger logger = Logger.getLogger(Buffer.class);
-
     private Queue<T> queue;
-
 
     private int itemsAdded;
 
