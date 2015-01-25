@@ -27,7 +27,7 @@ public class JrawRedditConnector implements RedditConnectorInterface {
     private RedditClient redditClient;
 
     private JrawRedditConnector(Builder builder) throws NetworkConnectionException, RedditApiException {
-        redditClient = new RedditClient(builder.userAgent);
+        redditClient = new CustomRedditClient(builder.userAgent, 60);
         loginOAuth(builder.login, builder.password, builder.clientId, builder.clientSecret);
     }
 
@@ -88,13 +88,21 @@ public class JrawRedditConnector implements RedditConnectorInterface {
                     .build());
             return processResponse(response);
         } catch (NetworkException e) {
+            if (e.getCode() == 403) {
+                return PostCommentResult.bannedFromThisSub();
+            }
             throw new NetworkConnectionException(e);
         }
     }
 
     private PostCommentResult processResponse(RedditResponse response) {
         if (response.hasErrors()) {
-            return PostCommentResult.unsuccessful(response.getErrors()[0].getMessage());
+            String message = response.getErrors()[0].getMessage();
+            if (message.contains("DELETED_COMMENT")) {
+                return PostCommentResult.commentDeleted();
+            } else {
+                return PostCommentResult.unsuccessful(message);
+            }
         } else {
             return PostCommentResult.successful(response.getJson().get("json").get("data").get("things").get(0)
                     .get("data").get("id").asText().substring(3));
