@@ -17,5 +17,6 @@ public class CustomRedditClient extends RedditClient {
         for(HttpLogger.Component component : HttpLogger.Component.values()){
             logger.disable(component);
         }
+        setRequestLoggingEnabled(false);
     }
 }
