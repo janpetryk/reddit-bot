@@ -73,26 +73,39 @@ public class TweetsInCommentsBot extends AbstractRedditBot {
             if (statusIdList.isEmpty() || userNameBlackList.contains(comment.getAuthor().toLowerCase())) {
                 return ProcessCommentResult.doNotRespond();
             } else {
-                List<Tweet> tweetList = new ArrayList<>();
-                for (String string : statusIdList) {
-                    Tweet tweet = twitterConnector.showStatus(Long.valueOf(string));
-                    if (comment.getBody().contains(tweet.getBody())) {
-                        return ProcessCommentResult.doNotRespond();
-                    } else {
-                        tweetList.add(tweet);
-                    }
+                List<Tweet> tweetList = getTweetsThatAreNotAlreadyInComment(comment, statusIdList);
+                if (tweetList.isEmpty()) {
+                    return ProcessCommentResult.doNotRespond();
+                } else {
+                    return ProcessCommentResult.respondWith(responseCommentCreator.createResponseComment(tweetList));
                 }
-                return ProcessCommentResult.respondWith(responseCommentCreator.createResponseComment(tweetList));
             }
         } catch (TwitterApiException e) {
-            if (e.isRateLimitExceeded()) {
-                sleepUntilRateLimitEnds(e.getMiliSecondsUntilReset());
-                return processComment(comment);
-            } else {
-                throw e;
+            return handleException(comment, e);
+        }
+    }
+
+    private List<Tweet> getTweetsThatAreNotAlreadyInComment(Comment comment, List<String> statusIdList) throws TwitterApiException {
+        List<Tweet> tweetList = new ArrayList<>();
+        for (String string : statusIdList) {
+            Tweet tweet = twitterConnector.showStatus(Long.valueOf(string));
+            if (!comment.getBody().contains(tweet.getBody())) {
+                tweetList.add(tweet);
             }
         }
+        return tweetList;
+    }
 
+    private ProcessCommentResult handleException(Comment comment, TwitterApiException e) throws Exception {
+        if (e.isRateLimitExceeded()) {
+            logger.warn("Twitter rate limit exceeded. Sleeping for " + e.getMiliSecondsUntilReset() / 1000 + " seconds");
+            sleepUntilRateLimitEnds(e.getMiliSecondsUntilReset());
+            return processComment(comment);
+        } else {
+            logger.error("Twitter api error occured. Message: " + e.getMessage() + ". Error code: " + e.getErrorCode()
+                    + " Comment removed from response queue");
+            return ProcessCommentResult.doNotRespond();
+        }
     }
 
     private void sleepUntilRateLimitEnds(Long milis) {

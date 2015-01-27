@@ -37,7 +37,8 @@ public class Twitter4JConnector implements TwitterConnectorInterface {
             return tweetBuilder.build();
         } catch (TwitterException e) {
             throw new TwitterApiException(e, e.exceededRateLimitation(),
-                    e.getRateLimitStatus().getSecondsUntilReset() * 1000);
+                    e.getRateLimitStatus().getSecondsUntilReset() > 0 ?
+                            e.getRateLimitStatus().getSecondsUntilReset() * 1000 : 0, e.getErrorCode());
         }
     }
 
