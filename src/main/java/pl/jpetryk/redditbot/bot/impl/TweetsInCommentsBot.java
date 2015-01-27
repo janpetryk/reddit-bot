@@ -42,30 +42,6 @@ public class TweetsInCommentsBot extends AbstractRedditBot {
         }
     }
 
-
-//    @Override
-//    protected boolean shouldRespondToComment(Comment comment) throws Exception {
-//        return commentParser.commentMatchesRegex(comment)
-//                && !userNameBlackList.contains(comment.getAuthor().toLowerCase());
-//    }
-//
-//    @Override
-//    protected String responseMessage(Comment comment) throws Exception {
-//        try {
-//            List<Tweet> tweetList = new ArrayList<>();
-//            for (String string : commentParser.getRegexGroup(comment, 3)) {
-//                tweetList.add(twitterConnector.showStatus(Long.valueOf(string)));
-//            }
-//            return responseCommentCreator.createResponseComment(tweetList);
-//        } catch (TwitterApiException e) {
-//            if (e.isRateLimitExceeded()) {
-//                sleepUntilRateLimitEnds(e.getMiliSecondsUntilReset());
-//                return responseMessage(comment);
-//            }
-//            throw e;
-//        }
-//    }
-
     @Override
     protected ProcessCommentResult processComment(Comment comment) throws Exception {
         try {
