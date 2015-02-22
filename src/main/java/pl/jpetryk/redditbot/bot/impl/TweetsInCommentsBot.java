@@ -1,17 +1,22 @@
 package pl.jpetryk.redditbot.bot.impl;
 
 import pl.jpetryk.redditbot.bot.AbstractRedditBot;
+import pl.jpetryk.redditbot.connectors.ImgurConnector;
+import pl.jpetryk.redditbot.connectors.ImgurConnectorInterface;
 import pl.jpetryk.redditbot.connectors.RedditConnectorInterface;
 import pl.jpetryk.redditbot.connectors.TwitterConnectorInterface;
 import pl.jpetryk.redditbot.exceptions.TwitterApiException;
 import pl.jpetryk.redditbot.model.Comment;
+import pl.jpetryk.redditbot.model.ImageEntity;
 import pl.jpetryk.redditbot.model.ProcessCommentResult;
 import pl.jpetryk.redditbot.model.Tweet;
 import pl.jpetryk.redditbot.utils.CommentParser;
 import pl.jpetryk.redditbot.utils.ResponseCommentCreator;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Jan on 10/01/15.
@@ -26,14 +31,18 @@ public class TweetsInCommentsBot extends AbstractRedditBot {
 
     private List<String> userNameBlackList;
 
-    public TweetsInCommentsBot(TwitterConnectorInterface twitterConnectorInterface,
+    private ImgurConnectorInterface imgurConnector;
+
+    public TweetsInCommentsBot(TwitterConnectorInterface twitterConnector,
                                RedditConnectorInterface redditConnectorInterface,
+                               ImgurConnectorInterface imgurConnector,
                                CommentParser commentParser,
                                String subreddits,
                                ResponseCommentCreator responseCommentCreator,
                                List<String> userNameBlackList) {
         super(redditConnectorInterface, subreddits);
-        twitterConnector = twitterConnectorInterface;
+        this.twitterConnector = twitterConnector;
+        this.imgurConnector = imgurConnector;
         this.commentParser = commentParser;
         this.responseCommentCreator = responseCommentCreator;
         this.userNameBlackList = new ArrayList<>();
@@ -46,26 +55,39 @@ public class TweetsInCommentsBot extends AbstractRedditBot {
     protected ProcessCommentResult processComment(Comment comment) throws Exception {
         try {
             List<String> statusIdList = commentParser.getRegexGroup(comment, 3);
-            if (statusIdList.isEmpty() || userNameBlackList.contains(comment.getAuthor().toLowerCase())) {
+            List<Tweet> tweetList = getTweetsThatAreNotAlreadyInComment(comment, statusIdList);
+            if (tweetList.isEmpty() || userNameBlackList.contains(comment.getAuthor().toLowerCase())) {
                 return ProcessCommentResult.doNotRespond();
             } else {
-                List<Tweet> tweetList = getTweetsThatAreNotAlreadyInComment(comment, statusIdList);
-                if (tweetList.isEmpty()) {
-                    return ProcessCommentResult.doNotRespond();
-                } else {
-                    return ProcessCommentResult.respondWith(responseCommentCreator.createResponseComment(tweetList));
+                String response = responseCommentCreator.createResponseComment(tweetList);
+                if (isTrashTalkThread(comment)) {
+                    response = response.toUpperCase();
                 }
+                return ProcessCommentResult.respondWith(response);
             }
         } catch (TwitterApiException e) {
             return handleException(comment, e);
         }
     }
 
-    private List<Tweet> getTweetsThatAreNotAlreadyInComment(Comment comment, List<String> statusIdList) throws TwitterApiException {
+    private void rehostImages(List<ImageEntity> imageEntities) throws Exception {
+        for (ImageEntity imageEntity : imageEntities) {
+            imageEntity.setRehostedUrl(imgurConnector.reuploadImage(imageEntity.getExpandedUrl()));
+        }
+    }
+
+    private boolean isTrashTalkThread(Comment comment) {
+        return comment.getLinkTitle().contains("TRASH TALK THREAD")
+                || comment.getLinkTitle().contains("THRASHTALK THREAD");
+    }
+
+    private List<Tweet> getTweetsThatAreNotAlreadyInComment(Comment comment, List<String> statusIdList)
+            throws Exception {
         List<Tweet> tweetList = new ArrayList<>();
         for (String string : statusIdList) {
             Tweet tweet = twitterConnector.showStatus(Long.valueOf(string));
             if (!comment.getBody().contains(tweet.getBody())) {
+                rehostImages(tweet.getImageEntities());
                 tweetList.add(tweet);
             }
         }

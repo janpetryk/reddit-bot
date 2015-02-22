@@ -2,9 +2,12 @@ package pl.jpetryk.redditbot.utils;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import pl.jpetryk.redditbot.model.ImageEntity;
 import pl.jpetryk.redditbot.model.Tweet;
 
+import java.awt.*;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Jan on 17/01/15.
@@ -13,10 +16,18 @@ public class ResponseCommentCreator {
 
     private String tweetResponseTemplate;
     private String footerTemplate;
+    private String datePattern;
+    private String twitterPicLink;
+    private String imgurPicLink;
 
-    public ResponseCommentCreator(String tweetResponseTemplate, String footerTemplate) {
+    public ResponseCommentCreator(String tweetResponseTemplate, String footerTemplate, String datePattern,
+                                  String twitterPicLink, String imgurPicLink) {
         this.tweetResponseTemplate = tweetResponseTemplate;
         this.footerTemplate = footerTemplate;
+        this.datePattern = datePattern;
+        this.twitterPicLink = twitterPicLink;
+        this.imgurPicLink = imgurPicLink;
+
     }
 
     private String createResponseComment(Tweet tweet) {
@@ -35,13 +46,23 @@ public class ResponseCommentCreator {
         replaceAll(tweetStringBuilder, "\n", "\n> ");
         replaceAll(tweetStringBuilder, "#", "\\#");
         replaceAll(tweetStringBuilder, "^", "\\^");
-        for (String string : tweet.getMediaEntities().keySet()) {
-            replaceAll(tweetStringBuilder, string, tweet.getMediaEntities().get(string));
+
+        for (ImageEntity imageEntity : tweet.getImageEntities()) {
+            replaceAll(tweetStringBuilder, imageEntity.getUrl(), getImageLinks(imageEntity));
         }
-        for (String string : tweet.getUrlEntities().keySet()) {
-            replaceAll(tweetStringBuilder, string, tweet.getUrlEntities().get(string));
+        for (Map.Entry<String, String> entry : tweet.getUrlEntities().entrySet()) {
+            replaceAll(tweetStringBuilder, entry.getKey(), entry.getValue());
         }
         return tweetStringBuilder.toString();
+    }
+
+    private String createRedditLink(String source, String name) {
+        return "[" + name + "]" + "(" + source + ")";
+    }
+
+    private String getImageLinks(ImageEntity entity) {
+        return createRedditLink(entity.getExpandedUrl(), twitterPicLink) + " "
+                + createRedditLink(entity.getRehostedUrl(), imgurPicLink);
     }
 
     private void replaceAll(StringBuilder builder, String from, String to) {
@@ -63,7 +84,7 @@ public class ResponseCommentCreator {
     }
 
     private String convertDateToString(DateTime dateTime) {
-        return dateTime.toDateTime(DateTimeZone.UTC).toString("yyyy-MM-dd HH:mm:ss zzz");
+        return dateTime.toDateTime(DateTimeZone.UTC).toString(datePattern);
     }
 
 
