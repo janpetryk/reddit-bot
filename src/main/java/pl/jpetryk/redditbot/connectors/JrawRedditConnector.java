@@ -26,9 +26,10 @@ public class JrawRedditConnector implements RedditConnectorInterface {
 
     private RedditClient redditClient;
 
-    private JrawRedditConnector(Builder builder) throws NetworkConnectionException, RedditApiException {
-        redditClient = new CustomRedditClient(builder.userAgent, 60);
-        loginOAuth(builder.login, builder.password, builder.clientId, builder.clientSecret);
+    public JrawRedditConnector(String userAgent, String login, String password, String clientId, String clientSecret)
+            throws NetworkConnectionException, RedditApiException {
+        redditClient = new CustomRedditClient(userAgent, 60);
+        loginOAuth(login, password, clientId, clientSecret);
     }
 
     @VisibleForTesting
@@ -65,6 +66,7 @@ public class JrawRedditConnector implements RedditConnectorInterface {
                         .created(new DateTime(jsonNode.get("created").asLong() * 1000))
                         .author(jsonNode.get("author").asText())
                         .subreddit(jsonNode.get("subreddit").asText())
+                        .linktTitle(jsonNode.get("link_title").asText())
                         .build();
                 result.add(comment);
             }
@@ -118,45 +120,6 @@ public class JrawRedditConnector implements RedditConnectorInterface {
                     .getComments().get(0);
         } catch (NetworkException e) {
             throw new NetworkConnectionException(e);
-        }
-    }
-
-    public static class Builder {
-
-        private String userAgent;
-        private String login;
-        private String clientId;
-        private String clientSecret;
-        private String password;
-
-        public Builder userAgent(String userAgent) {
-            this.userAgent = userAgent;
-            return this;
-        }
-
-        public Builder login(String login) {
-            this.login = login;
-            return this;
-        }
-
-        public Builder password(String password) {
-            this.password = password;
-            return this;
-        }
-
-        public Builder clientId(String clientId) {
-            this.clientId = clientId;
-            return this;
-        }
-
-        public Builder clientSecret(String clientSecret) {
-            this.clientSecret = clientSecret;
-            return this;
-        }
-
-
-        public JrawRedditConnector build() throws NetworkConnectionException, RedditApiException {
-            return new JrawRedditConnector(this);
         }
     }
 }

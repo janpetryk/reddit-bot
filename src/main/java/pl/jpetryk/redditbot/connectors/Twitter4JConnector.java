@@ -14,12 +14,12 @@ public class Twitter4JConnector implements TwitterConnectorInterface {
 
     private Twitter twitter;
 
-    private Twitter4JConnector(Builder builder) {
+    public Twitter4JConnector(String apiKey, String apiSecret, String accessToken, String accessTokenSecret) {
         ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
-        configurationBuilder.setOAuthConsumerKey(builder.apiKey);
-        configurationBuilder.setOAuthConsumerSecret(builder.apiSecret);
-        configurationBuilder.setOAuthAccessToken(builder.accessToken);
-        configurationBuilder.setOAuthAccessTokenSecret(builder.accessTokenSecret);
+        configurationBuilder.setOAuthConsumerKey(apiKey);
+        configurationBuilder.setOAuthConsumerSecret(apiSecret);
+        configurationBuilder.setOAuthAccessToken(accessToken);
+        configurationBuilder.setOAuthAccessTokenSecret(accessTokenSecret);
         TwitterFactory twitterFactory = new TwitterFactory(configurationBuilder.build());
         twitter = twitterFactory.getInstance();
     }
@@ -37,52 +37,29 @@ public class Twitter4JConnector implements TwitterConnectorInterface {
             return tweetBuilder.build();
         } catch (TwitterException e) {
             throw new TwitterApiException(e, e.exceededRateLimitation(),
-                    e.getRateLimitStatus().getSecondsUntilReset() > 0 ?
+                    (e.getRateLimitStatus() != null && e.getRateLimitStatus().getSecondsUntilReset() > 0) ?
                             e.getRateLimitStatus().getSecondsUntilReset() * 1000 : 0, e.getErrorCode());
         }
     }
 
     private void prepareEntities(Status status, Tweet.Builder tweetBuilder) {
         for (URLEntity urlEntity : status.getURLEntities()) {
-            tweetBuilder.addUrlEntity(urlEntity.getURL(), urlEntity.getExpandedURL());
+            String resultUrl = getNoParticipationRedditLink(urlEntity.getExpandedURL());
+            tweetBuilder.addUrlEntity(urlEntity.getURL(), resultUrl);
         }
         for (MediaEntity mediaEntity : status.getMediaEntities()) {
-            tweetBuilder.addMediaEntity(mediaEntity.getURL(), mediaEntity.getMediaURL());
+            tweetBuilder.addImageEntity(mediaEntity.getURL(), mediaEntity.getMediaURL());
         }
     }
 
-
-    public static class Builder {
-        private String apiKey;
-        private String apiSecret;
-        private String accessToken;
-        private String accessTokenSecret;
-
-        public Builder apiKey(String apiKey) {
-            this.apiKey = apiKey;
-            return this;
+    private String getNoParticipationRedditLink(String url) {
+        String resultUrl;
+        if(url.toLowerCase().contains("reddit.com")){
+            resultUrl = url.replace("reddit.com", "np.reddit.com");
+        }else{
+            resultUrl = url;
         }
-
-        public Builder apiSecret(String apiSecret) {
-            this.apiSecret = apiSecret;
-            return this;
-        }
-
-        public Builder accessToken(String accessToken) {
-            this.accessToken = accessToken;
-            return this;
-        }
-
-        public Builder accessTokenSecret(String accessTokenSecret) {
-            this.accessTokenSecret = accessTokenSecret;
-            return this;
-        }
-
-        public Twitter4JConnector build() {
-            return new Twitter4JConnector(this);
-        }
-
+        return resultUrl;
     }
-
 
 }

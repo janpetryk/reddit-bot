@@ -12,11 +12,9 @@ public class Twitter4JConnectorITCase extends AbstractTwitterConnectorITCase<Twi
 
     @Override
     protected Twitter4JConnector createInstance() {
-        return new Twitter4JConnector.Builder()
-                .apiKey(properties.getProperty("api-key"))
-                .apiSecret(properties.getProperty("api-secret"))
-                .accessToken(properties.getProperty("access-token"))
-                .accessTokenSecret(properties.getProperty("access-token-secret"))
-                .build();
+        return new Twitter4JConnector(properties.getProperty("api-key"),
+                properties.getProperty("api-secret"),
+                properties.getProperty("access-token"),
+                properties.getProperty("access-token-secret"));
     }
 }

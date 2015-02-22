@@ -11,24 +11,20 @@ public class JrawRedditConnectorITCase extends AbstractRedditConnectorITCase<Jra
 
     @Override
     protected JrawRedditConnector createValidInstance() throws NetworkConnectionException, RedditApiException {
-        return new JrawRedditConnector.Builder()
-                .login(testProperties.getProperty("reddit-login"))
-                .password(testProperties.getProperty("reddit-password"))
-                .clientId(testProperties.getProperty("reddit-client-id"))
-                .clientSecret(testProperties.getProperty("reddit-client-secret"))
-                .userAgent(testProperties.getProperty("reddit-useragent"))
-                .build();
+        return new JrawRedditConnector(testProperties.getProperty("reddit-useragent"),
+                testProperties.getProperty("reddit-login"),
+                testProperties.getProperty("reddit-password"),
+                testProperties.getProperty("reddit-client-id"),
+                testProperties.getProperty("reddit-client-secret"));
     }
 
     @Override
     protected JrawRedditConnector createInvalidInstance() throws NetworkConnectionException, RedditApiException {
-        return new JrawRedditConnector.Builder()
-                .login(testProperties.getProperty("reddit-login"))
-                .password("invalid-password")
-                .clientId(testProperties.getProperty("reddit-client-id"))
-                .clientSecret(testProperties.getProperty("reddit-client-secret"))
-                .userAgent(testProperties.getProperty("reddit-useragent"))
-                .build();
+        return new JrawRedditConnector(testProperties.getProperty("reddit-useragent"),
+                testProperties.getProperty("reddit-login"),
+                "INVALID_PASSWORD",
+                testProperties.getProperty("reddit-client-id"),
+                testProperties.getProperty("reddit-client-secret"));
     }
 
     @Override
