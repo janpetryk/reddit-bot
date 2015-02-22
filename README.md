@@ -1,8 +1,11 @@
-# reddit-bot
-Java Reddit bot project for raspberry pi.
+It is a reddit-wide bot that parses comments and checks if they have Twitter link in them. 
 
-This is my personal project of generic reddit bot that replies specific message to comments that fullfill given criteria.
+Bot profile: http://www.reddit.com/user/TweetsInCommentsBot
 
-At first, I was going to write this in python (since I read that python is great for this job and has raspberry pi offers great support for this language), but then I read this: http://www.teamten.com/lawrence/writings/java-for-everything.html. It is still work in progress but at the moment you can actually use it (by extending AbstractRedditBot.java - as in HelloRedditBot.java).
+If a comment contains a link then bot checks if user already submitted body of a tweet within comment and if not it posts value of a tweet as a child response.
 
-My goal for it is to be a bot that replies tweets to comments that contain twitter links. I want this project to be easy to set up (maven dependencies) and easy to deploy on any linux machine (ant task).
+It is written entirely in Java. I started writing it in python but I do not know this language very well (if at all), so with great support for Java on RPi and after reading this blog: http://www.teamten.com/lawrence/writings/java-for-everything.html I decided to pick that language. I wanted it to be as modular and generic so I can reuse the main frame of the appliation if I wanted to create another bot.
+
+I run into some difficulites, mostly caused by reddit and twitter api, their respective limitations and what not. Also JRAW introduced two major bugs to my application and they were rather hard to debug and solve.
+
+It is run on Raspberry PI, but can be run on any machine. I have automated deploying process for linux system.
