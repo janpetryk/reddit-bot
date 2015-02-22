@@ -28,8 +28,9 @@ public abstract class AbstractRedditBot implements Runnable {
     @VisibleForTesting
     Queue<Comment> fetchedCommentQueue;
 
+    private Thread responseThread;
 
-    private Thread processAndRespondToCommentsThread;
+    private Thread processCommentsThread;
 
 
     private String subreddits;
@@ -37,9 +38,10 @@ public abstract class AbstractRedditBot implements Runnable {
     public AbstractRedditBot(RedditConnectorInterface connector, String subreddits) {
         this.connector = connector;
         this.subreddits = subreddits;
-        commentToRespondMap = new HashMap<>();
+        commentToRespondMap = new ConcurrentHashMap<>();
         processedCommentsBuffer = new Buffer<>(10 * RedditConnectorInterface.MAX_COMMENTS_PER_REQUEST);
-        processAndRespondToCommentsThread = prepareProcessAndRespondToCommentsThread();
+        responseThread = prepareResponseThread();
+        processCommentsThread = prepareProcessCommentsThread();
         fetchedCommentQueue = new ConcurrentLinkedQueue<>();
     }
 
@@ -50,11 +52,14 @@ public abstract class AbstractRedditBot implements Runnable {
         try {
             int startingNumberOfItems = processedCommentsBuffer.itemsAdded();
             getUniqueNewestComments();
-            if (!fetchedCommentQueue.isEmpty() && !processAndRespondToCommentsThread.isAlive()) {
-                processAndRespondToCommentsThread = prepareProcessAndRespondToCommentsThread();
-                processAndRespondToCommentsThread.start();
+            if (!fetchedCommentQueue.isEmpty() && !processCommentsThread.isAlive()) {
+                processCommentsThread = prepareProcessCommentsThread();
+                processCommentsThread.start();
             }
-
+            if (!commentToRespondMap.isEmpty() && !responseThread.isAlive()) {
+                responseThread = prepareResponseThread();
+                responseThread.start();
+            }
             logger.trace("Comments processed: " + processedCommentsBuffer.itemsAdded() + ".");
             if (processedCommentsBuffer.itemsAdded() - startingNumberOfItems == RedditConnectorInterface.MAX_COMMENTS_PER_REQUEST &&
                     startingNumberOfItems != 0) {
@@ -76,23 +81,6 @@ public abstract class AbstractRedditBot implements Runnable {
         }
     }
 
-    @VisibleForTesting
-    void addMatchingCommentsToWaitingQueue() {
-        while (!fetchedCommentQueue.isEmpty()) {
-            try {
-                Comment comment = fetchedCommentQueue.element();
-                ProcessCommentResult parseResult = processComment(comment);
-                if (parseResult.shouldRespond()) {
-                    commentToRespondMap.put(comment, parseResult.getResponseMessage());
-                    logger.info("Added comment with id " + comment.getCommentId() + " to waiting to respond queue");
-                }
-                fetchedCommentQueue.remove();
-            } catch (Exception e) {
-                logger.error(e);
-            }
-        }
-        logger.trace("Waiting queue size: " + commentToRespondMap.size() + ".");
-    }
 
     @VisibleForTesting
     void respondToMatchingComments() {
@@ -119,12 +107,40 @@ public abstract class AbstractRedditBot implements Runnable {
         }
     }
 
-    private Thread prepareProcessAndRespondToCommentsThread() {
+
+    @VisibleForTesting
+    void addMatchingCommentsToWaitingQueue() {
+        try {
+            while (!fetchedCommentQueue.isEmpty()) {
+                Comment comment = fetchedCommentQueue.element();
+                ProcessCommentResult parseResult = processComment(comment);
+                if (parseResult.shouldRespond()) {
+                    commentToRespondMap.put(comment, parseResult.getResponseMessage());
+                    logger.info("Added comment with id " + comment.getCommentId() + " to waiting to respond queue");
+                }
+                fetchedCommentQueue.remove();
+            }
+            logger.trace("Waiting queue size: " + commentToRespondMap.size() + ".");
+        } catch (Exception e) {
+            logger.error(e);
+        }
+    }
+
+
+    private Thread prepareResponseThread() {
+        return new Thread(new Runnable() {
+            @Override
+            public void run() {
+                respondToMatchingComments();
+            }
+        });
+    }
+
+    private Thread prepareProcessCommentsThread() {
         return new Thread(new Runnable() {
             @Override
             public void run() {
                 addMatchingCommentsToWaitingQueue();
-                respondToMatchingComments();
             }
         });
     }
