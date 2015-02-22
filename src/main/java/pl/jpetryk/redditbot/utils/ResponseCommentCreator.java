@@ -5,7 +5,6 @@ import org.joda.time.DateTimeZone;
 import pl.jpetryk.redditbot.model.ImageEntity;
 import pl.jpetryk.redditbot.model.Tweet;
 
-import java.awt.*;
 import java.util.List;
 import java.util.Map;
 
@@ -61,8 +60,11 @@ public class ResponseCommentCreator {
     }
 
     private String getImageLinks(ImageEntity entity) {
-        return createRedditLink(entity.getExpandedUrl(), twitterPicLink) + " "
-                + createRedditLink(entity.getRehostedUrl(), imgurPicLink);
+        String result = createRedditLink(entity.getExpandedUrl(), twitterPicLink);
+        if (entity.isImageRehostedSuccessfully()) {
+            result = result + " " + createRedditLink(entity.getRehostedUrl(), imgurPicLink);
+        }
+        return result;
     }
 
     private void replaceAll(StringBuilder builder, String from, String to) {

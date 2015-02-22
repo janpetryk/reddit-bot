@@ -1,12 +1,10 @@
 package pl.jpetryk.redditbot.connectors;
 
 import com.squareup.okhttp.OkHttpClient;
+import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.net.*;
 import java.util.concurrent.TimeUnit;
 
@@ -26,7 +24,7 @@ public class ImgurConnector implements ImgurConnectorInterface {
     }
 
     @Override
-    public String reuploadImage(String imageURL) throws Exception {
+    public String reuploadImage(String imageURL) throws IOException, JSONException {
         URL url = new URL(IMAGE_UPLOAD_URL);
 
         String data = URLEncoder.encode("image", "UTF-8") + "="

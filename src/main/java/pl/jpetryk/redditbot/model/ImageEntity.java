@@ -8,10 +8,12 @@ public class ImageEntity {
     private String url;
     private String expandedUrl;
     private String rehostedUrl;
+    private boolean imageRehostedSuccessfully;
 
     public ImageEntity(String url, String expandedUrl) {
         this.url = url;
         this.expandedUrl = expandedUrl;
+        imageRehostedSuccessfully = false;
     }
 
     public String getUrl() {
@@ -27,6 +29,13 @@ public class ImageEntity {
     }
 
     public void setRehostedUrl(String rehostedUrl) {
+        if (rehostedUrl != null) {
+            imageRehostedSuccessfully = true;
+        }
         this.rehostedUrl = rehostedUrl;
+    }
+
+    public boolean isImageRehostedSuccessfully() {
+        return imageRehostedSuccessfully;
     }
 }

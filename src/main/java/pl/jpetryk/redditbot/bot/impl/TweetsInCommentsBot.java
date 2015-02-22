@@ -1,5 +1,6 @@
 package pl.jpetryk.redditbot.bot.impl;
 
+import org.json.JSONException;
 import pl.jpetryk.redditbot.bot.AbstractRedditBot;
 import pl.jpetryk.redditbot.connectors.ImgurConnector;
 import pl.jpetryk.redditbot.connectors.ImgurConnectorInterface;
@@ -13,6 +14,7 @@ import pl.jpetryk.redditbot.model.Tweet;
 import pl.jpetryk.redditbot.utils.CommentParser;
 import pl.jpetryk.redditbot.utils.ResponseCommentCreator;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -70,9 +72,14 @@ public class TweetsInCommentsBot extends AbstractRedditBot {
         }
     }
 
-    private void rehostImages(List<ImageEntity> imageEntities) throws Exception {
+    private void rehostImages(List<ImageEntity> imageEntities) {
         for (ImageEntity imageEntity : imageEntities) {
-            imageEntity.setRehostedUrl(imgurConnector.reuploadImage(imageEntity.getExpandedUrl()));
+            String reuploadedImageUrl = null;
+            try {
+                reuploadedImageUrl = imgurConnector.reuploadImage(imageEntity.getExpandedUrl());
+            } catch (Exception e) {
+            }
+            imageEntity.setRehostedUrl(reuploadedImageUrl);
         }
     }
 
