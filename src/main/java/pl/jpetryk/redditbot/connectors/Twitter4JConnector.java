@@ -7,6 +7,9 @@ import pl.jpetryk.redditbot.model.Tweet;
 import twitter4j.*;
 import twitter4j.conf.ConfigurationBuilder;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+
 /**
  * Created by Jan on 09/01/15.
  */
@@ -14,7 +17,11 @@ public class Twitter4JConnector implements TwitterConnectorInterface {
 
     private Twitter twitter;
 
-    public Twitter4JConnector(String apiKey, String apiSecret, String accessToken, String accessTokenSecret) {
+    @Inject
+    public Twitter4JConnector(@Named("api-key")String apiKey,
+                              @Named("api-secret")String apiSecret,
+                              @Named("access-token")String accessToken,
+                              @Named("access-token-secret")String accessTokenSecret) {
         ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
         configurationBuilder.setOAuthConsumerKey(apiKey);
         configurationBuilder.setOAuthConsumerSecret(apiSecret);

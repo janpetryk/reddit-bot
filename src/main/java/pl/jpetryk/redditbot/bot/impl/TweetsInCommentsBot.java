@@ -14,6 +14,8 @@ import pl.jpetryk.redditbot.model.Tweet;
 import pl.jpetryk.redditbot.utils.CommentParser;
 import pl.jpetryk.redditbot.utils.ResponseCommentCreator;
 
+import javax.inject.Inject;
+import javax.inject.Named;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,11 +37,12 @@ public class TweetsInCommentsBot extends AbstractRedditBot {
 
     private ImgurConnectorInterface imgurConnector;
 
+    @Inject
     public TweetsInCommentsBot(TwitterConnectorInterface twitterConnector,
                                RedditConnectorInterface redditConnectorInterface,
                                ImgurConnectorInterface imgurConnector,
                                CommentParser commentParser,
-                               String subreddits,
+                               @Named("subreddits") String subreddits,
                                ResponseCommentCreator responseCommentCreator,
                                List<String> userNameBlackList) {
         super(redditConnectorInterface, subreddits);

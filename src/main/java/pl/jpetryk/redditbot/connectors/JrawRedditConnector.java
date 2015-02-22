@@ -14,6 +14,8 @@ import pl.jpetryk.redditbot.exceptions.NetworkConnectionException;
 import pl.jpetryk.redditbot.exceptions.RedditApiException;
 import pl.jpetryk.redditbot.model.*;
 
+import javax.inject.Inject;
+import javax.inject.Named;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -26,7 +28,12 @@ public class JrawRedditConnector implements RedditConnectorInterface {
 
     private RedditClient redditClient;
 
-    public JrawRedditConnector(String userAgent, String login, String password, String clientId, String clientSecret)
+    @Inject
+    public JrawRedditConnector(@Named("reddit-useragent") String userAgent,
+                               @Named("reddit-login") String login,
+                               @Named("reddit-password") String password,
+                               @Named("reddit-client-id") String clientId,
+                               @Named("reddit-client-secret") String clientSecret)
             throws NetworkConnectionException, RedditApiException {
         redditClient = new CustomRedditClient(userAgent, 60);
         loginOAuth(login, password, clientId, clientSecret);

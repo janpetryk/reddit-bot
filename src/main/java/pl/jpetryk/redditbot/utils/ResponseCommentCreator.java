@@ -1,10 +1,12 @@
 package pl.jpetryk.redditbot.utils;
 
+import com.google.inject.Inject;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import pl.jpetryk.redditbot.model.ImageEntity;
 import pl.jpetryk.redditbot.model.Tweet;
 
+import javax.inject.Named;
 import java.util.List;
 import java.util.Map;
 
@@ -19,8 +21,12 @@ public class ResponseCommentCreator {
     private String twitterPicLink;
     private String imgurPicLink;
 
-    public ResponseCommentCreator(String tweetResponseTemplate, String footerTemplate, String datePattern,
-                                  String twitterPicLink, String imgurPicLink) {
+    @Inject
+    public ResponseCommentCreator(@Named("response-template") String tweetResponseTemplate,
+                                  @Named("footer-template") String footerTemplate,
+                                  @Named("date-pattern") String datePattern,
+                                  @Named("twitter-pic-link") String twitterPicLink,
+                                  @Named("imgur-pic-link") String imgurPicLink) {
         this.tweetResponseTemplate = tweetResponseTemplate;
         this.footerTemplate = footerTemplate;
         this.datePattern = datePattern;

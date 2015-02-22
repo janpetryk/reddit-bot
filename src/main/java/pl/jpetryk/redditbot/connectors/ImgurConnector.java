@@ -4,6 +4,8 @@ import com.squareup.okhttp.OkHttpClient;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import javax.inject.Inject;
+import javax.inject.Named;
 import java.io.*;
 import java.net.*;
 import java.util.concurrent.TimeUnit;
@@ -18,7 +20,9 @@ public class ImgurConnector implements ImgurConnectorInterface {
     private String clientID;
     private String clientSecret;
 
-    public ImgurConnector(String clientID, String clientSecret) {
+    @Inject
+    public ImgurConnector(@Named("imgur-client-id") String clientID,
+                          @Named("imgur-client-secret") String clientSecret) {
         this.clientID = clientID;
         this.clientSecret = clientSecret;
     }

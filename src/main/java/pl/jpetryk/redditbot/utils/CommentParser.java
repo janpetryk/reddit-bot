@@ -2,6 +2,8 @@ package pl.jpetryk.redditbot.utils;
 
 import pl.jpetryk.redditbot.model.Comment;
 
+import javax.inject.Inject;
+import javax.inject.Named;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -13,7 +15,8 @@ public class CommentParser {
 
     private Pattern pattern;
 
-    public CommentParser(String regex) {
+    @Inject
+    public CommentParser(@Named("twitter-status-regex") String regex) {
         this.pattern = Pattern.compile(regex);
     }
 

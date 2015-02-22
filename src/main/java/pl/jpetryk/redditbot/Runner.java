@@ -1,7 +1,10 @@
 package pl.jpetryk.redditbot;
 
 import com.google.common.io.Files;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import org.apache.log4j.*;
+
 import pl.jpetryk.redditbot.bot.AbstractRedditBot;
 import pl.jpetryk.redditbot.bot.impl.TweetsInCommentsBot;
 import pl.jpetryk.redditbot.connectors.*;
@@ -24,87 +27,20 @@ import java.util.List;
  */
 public class Runner {
 
-    private static final Logger logger = Logger.getLogger(Runner.class);
-
     public static void main(String[] args) throws Exception {
 
 
         PropertiesReader redditProperties = new PropertiesReader("resources/bot.properties");
-        PropertiesReader twitterProperties = new PropertiesReader("resources/twitter.properties");
-        PropertiesReader templateProperties = new PropertiesReader("resources/template/template.properties");
-
 
         configureLogger();
+        Injector injector = Guice.createInjector(new BotModule());
 
-        RedditConnectorInterface redditConnector = prepareRedditConnector(redditProperties);
-        logger.trace("created reddit connector");
-
-        TwitterConnectorInterface twitterConnector = prepareTwitterConnector(twitterProperties);
-
-        logger.trace("created twitter connector");
-
-        CommentParser parser = new CommentParser(twitterProperties.getProperty("twitter-status-regex"));
-        logger.trace("created comment parser");
-
-        ImgurConnectorInterface imgurConnector = getImgurConnector(redditProperties);
-        logger.trace("created imgur connector");
-
-
-        ResponseCommentCreator responseCommentCreator = prepareResponseCommentCreator(templateProperties);
-        logger.trace("created response comment creator");
-
-        AbstractRedditBot bot = prepareBot(redditProperties, redditConnector, imgurConnector, twitterConnector,
-                parser, responseCommentCreator);
-        logger.trace("created bot");
+        AbstractRedditBot bot = injector.getInstance(TweetsInCommentsBot.class);
 
         while (true) {
             bot.run();
             Thread.sleep(Long.valueOf(redditProperties.getProperty("run-interval")));
         }
-    }
-
-    private static AbstractRedditBot prepareBot(PropertiesReader redditProperties,
-                                                RedditConnectorInterface redditConnector,
-                                                ImgurConnectorInterface imgurConnector,
-                                                TwitterConnectorInterface twitterConnector,
-                                                CommentParser parser,
-                                                ResponseCommentCreator responseCommentCreator) {
-        List<String> blacklist = new ArrayList<>(Arrays.asList(redditProperties.getProperty("blacklist").split(", ")));
-        blacklist.add(redditProperties.getProperty("reddit-login"));
-        return new TweetsInCommentsBot(twitterConnector, redditConnector, imgurConnector, parser,
-                redditProperties.getProperty("subreddits"), responseCommentCreator, blacklist);
-    }
-
-    private static ResponseCommentCreator prepareResponseCommentCreator(PropertiesReader templateProperties)
-            throws IOException {
-        String responseTemplate = Files.toString(new File("resources/template/reply-template"),
-                Charset.defaultCharset());
-        String footerTemplate = Files.toString(new File("resources/template/footer-template"),
-                Charset.defaultCharset());
-        return new ResponseCommentCreator(responseTemplate, footerTemplate,
-                templateProperties.getProperty("date-pattern"), templateProperties.getProperty("twitter-pic-link"),
-                templateProperties.getProperty("imgur-pic-link"));
-    }
-
-    private static ImgurConnector getImgurConnector(PropertiesReader botProperties) {
-        return new ImgurConnector(botProperties.getProperty("imgur-client-id"),
-                botProperties.getProperty("imgur-client-secret"));
-    }
-
-    private static Twitter4JConnector prepareTwitterConnector(PropertiesReader twitterProperties) {
-        return new Twitter4JConnector(twitterProperties.getProperty("api-key"),
-                twitterProperties.getProperty("api-secret"),
-                twitterProperties.getProperty("access-token"),
-                twitterProperties.getProperty("access-token-secret"));
-    }
-
-    private static JrawRedditConnector prepareRedditConnector(PropertiesReader redditProperties) throws NetworkConnectionException, RedditApiException {
-
-        return new JrawRedditConnector(redditProperties.getProperty("reddit-useragent"),
-                redditProperties.getProperty("reddit-login"),
-                redditProperties.getProperty("reddit-password"),
-                redditProperties.getProperty("reddit-client-id"),
-                redditProperties.getProperty("reddit-client-secret"));
     }
 
     private static void configureLogger() throws IOException {
