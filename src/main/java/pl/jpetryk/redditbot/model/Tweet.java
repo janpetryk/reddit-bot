@@ -1,10 +1,13 @@
 package pl.jpetryk.redditbot.model;
 
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.joda.time.DateTime;
 
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -19,7 +22,7 @@ public class Tweet {
     private String poster;
     private DateTime datePosted;
     private Map<String, String> urlEntities;
-    private Map<String, String> mediaEntities;
+    private List<ImageEntity> imageEntities;
 
     private Tweet(Builder builder) {
         this.id = builder.id;
@@ -27,7 +30,7 @@ public class Tweet {
         this.poster = builder.poster;
         this.datePosted = builder.datePosted;
         this.urlEntities = ImmutableMap.copyOf(builder.urlEntities);
-        this.mediaEntities = ImmutableMap.copyOf(builder.mediaEntities);
+        this.imageEntities = ImmutableList.copyOf(builder.imageEntities);
     }
 
     public long getId() {
@@ -54,8 +57,8 @@ public class Tweet {
         return getPosterProfileUrl() + "status/" + id;
     }
 
-    public Map<String, String> getMediaEntities() {
-        return mediaEntities;
+    public List<ImageEntity> getImageEntities() {
+        return imageEntities;
     }
 
     public Map<String, String> getUrlEntities() {
@@ -85,11 +88,11 @@ public class Tweet {
         private String poster;
         private DateTime datePosted;
         private Map<String, String> urlEntities;
-        private Map<String, String> mediaEntities;
+        private List<ImageEntity> imageEntities;
 
         public Builder() {
             urlEntities = new HashMap<>();
-            mediaEntities = new HashMap<>();
+            imageEntities = new LinkedList<>();
         }
 
         public Builder id(long id) {
@@ -117,8 +120,8 @@ public class Tweet {
             return this;
         }
 
-        public Builder addMediaEntity(String key, String value) {
-            mediaEntities.put(key, value);
+        public Builder addImageEntity(String key, String value) {
+            imageEntities.add(new ImageEntity(key, value));
             return this;
         }
 

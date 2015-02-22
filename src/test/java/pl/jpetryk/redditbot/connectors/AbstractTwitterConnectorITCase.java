@@ -29,7 +29,6 @@ public abstract class AbstractTwitterConnectorITCase<T extends TwitterConnectorI
         assertNotNull(tweet.getId());
         assertNotNull(tweet.getDatePosted());
         assertNotNull(tweet.getPosterScreenName());
-
     }
 
 }

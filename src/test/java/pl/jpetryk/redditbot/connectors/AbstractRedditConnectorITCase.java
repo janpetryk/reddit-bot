@@ -58,6 +58,7 @@ public abstract class AbstractRedditConnectorITCase<T extends RedditConnectorInt
         assertNotNull(comment.getCommentId());
         assertNotNull(comment.getLinkId());
         assertNotNull(comment.getLinkUrl());
+        assertNotNull(comment.getLinkTitle());
     }
 
     @Test

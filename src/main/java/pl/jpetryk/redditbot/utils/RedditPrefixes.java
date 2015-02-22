@@ -8,8 +8,6 @@ public class RedditPrefixes {
     private RedditPrefixes() {
     }
 
-    ;
-
     public static final String COMMENT_PREFIX = "t1_";
 
     public static final String ACCOUNT_PREFIX = "t2_";

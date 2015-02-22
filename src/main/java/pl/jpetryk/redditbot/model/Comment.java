@@ -8,9 +8,6 @@ import pl.jpetryk.redditbot.utils.RedditPrefixes;
  */
 public class Comment {
 
-    private static final String REDDIT_URL = "http://reddit.com/";
-
-
     private String commentId;
     private String body;
     private String linkId;
@@ -18,6 +15,7 @@ public class Comment {
     private DateTime created;
     private String linkUrl;
     private String subreddit;
+    private String linkTitle;
 
     private Comment(Builder builder) {
         commentId = builder.commentId;
@@ -27,6 +25,7 @@ public class Comment {
         created = builder.created;
         linkUrl = builder.linkUrl;
         subreddit = builder.subreddit;
+        linkTitle = builder.linkTitle;
     }
 
     public String getCommentId() {
@@ -65,6 +64,10 @@ public class Comment {
         return RedditPrefixes.LINK_PREFIX + linkId;
     }
 
+    public String getLinkTitle() {
+        return linkTitle;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -95,6 +98,7 @@ public class Comment {
         private DateTime created;
         private String linkUrl;
         private String subreddit;
+        private String linkTitle;
 
         public Builder commentId(String id) {
             this.commentId = id;
@@ -128,6 +132,11 @@ public class Comment {
 
         public Builder subreddit(String subreddit) {
             this.subreddit = subreddit;
+            return this;
+        }
+
+        public Builder linktTitle(String linkTitle) {
+            this.linkTitle = linkTitle;
             return this;
         }
 
