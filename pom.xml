@@ -83,9 +83,53 @@
             <artifactId>twitter4j-core</artifactId>
             <version>[4.0,)</version>
         </dependency>
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20090211</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.15</version>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>unit-tests</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                        <configuration>
+                            <skip>false</skip>
+                            <includes>
+                                <include>**/*Test.class</include>
+                            </includes>
+                            <excludes>
+                                <exclude>**/*ITCase.class</exclude>
+                            </excludes>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>integration-tests</id>
+                        <phase>integration-test</phase>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                        <configuration>
+                            <skip>${skip.integration.tests}</skip>
+                            <includes>
+                                <include>**/*ITCase.class</include>
+                            </includes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>2.2-beta-5</version>
@@ -148,17 +192,11 @@
                         <goals>
                             <goal>run</goal>
                         </goals>
-                        <phase>package</phase>
+                        <phase>install</phase>
                         <configuration>
                             <target>
                                 <property name="jar-name"
                                           value="${project.artifactId}-${project.version}-${descriptor-ref}.jar"/>
-                                <!--<sshexec host="${server-address}"-->
-                                         <!--username="${root-login}"-->
-                                         <!--password="${password}"-->
-                                         <!--trust="yes"-->
-                                         <!--failonerror="false"-->
-                                         <!--command="rm -r -f ${app-dir}&amp;&amp;mkdir ${app-dir}&amp;&amp; mkdir ${app-dir}/resources &amp;&amp; pkill -f java.*${project.artifactId}"/>-->
                                 <scp trust="yes"
                                      todir="${root-login}:${password}@${server-address}:${app-dir}">
                                     <fileset dir="${basedir}/target">
@@ -171,11 +209,6 @@
                                         <include name="*/**"/>
                                     </fileset>
                                 </scp>
-                                <!--<sshexec host="${server-address}"-->
-                                         <!--username="${root-login}"-->
-                                         <!--password="${password}"-->
-                                         <!--trust="yes"-->
-                                         <!--command="cd ${app-dir}&amp;&amp;nohup java -jar ${jar-name}&amp;"/>-->
                             </target>
                         </configuration>
                     </execution>
