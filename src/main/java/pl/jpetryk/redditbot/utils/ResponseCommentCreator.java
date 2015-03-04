@@ -3,8 +3,9 @@ package pl.jpetryk.redditbot.utils;
 import com.google.inject.Inject;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import pl.jpetryk.redditbot.model.ImageEntity;
+import pl.jpetryk.redditbot.model.RehostedImageEntity;
 import pl.jpetryk.redditbot.model.Tweet;
+import pl.jpetryk.redditbot.model.TweetWithRehostedImages;
 
 import javax.inject.Named;
 import java.util.List;
@@ -18,8 +19,8 @@ public class ResponseCommentCreator {
     private String tweetResponseTemplate;
     private String footerTemplate;
     private String datePattern;
-    private String twitterPicLink;
-    private String imgurPicLink;
+    private String twitterPicLinkTemplate;
+    private String imgurPicLinkTemplate;
 
     @Inject
     public ResponseCommentCreator(@Named("response-template") String tweetResponseTemplate,
@@ -30,12 +31,21 @@ public class ResponseCommentCreator {
         this.tweetResponseTemplate = tweetResponseTemplate;
         this.footerTemplate = footerTemplate;
         this.datePattern = datePattern;
-        this.twitterPicLink = twitterPicLink;
-        this.imgurPicLink = imgurPicLink;
+        this.twitterPicLinkTemplate = twitterPicLink;
+        this.imgurPicLinkTemplate = imgurPicLink;
 
     }
 
-    private String createResponseComment(Tweet tweet) {
+    public String createResponseComment(List<TweetWithRehostedImages> tweetList) {
+        String result = "";
+        for (TweetWithRehostedImages tweet : tweetList) {
+            result += createResponseComment(tweet);
+        }
+        result += footerTemplate;
+        return result;
+    }
+
+    private String createResponseComment(TweetWithRehostedImages tweet) {
         StringBuilder result = new StringBuilder(tweetResponseTemplate);
         replaceAll(result, "${posterScreenName}", tweet.getPosterScreenName());
         replaceAll(result, "${posterProfileUrl}", tweet.getPosterProfileUrl());
@@ -46,31 +56,39 @@ public class ResponseCommentCreator {
         return result.toString();
     }
 
-    private String prepareTweetBody(Tweet tweet) {
+    private String prepareTweetBody(TweetWithRehostedImages tweet) {
         StringBuilder tweetStringBuilder = new StringBuilder(tweet.getBody());
         replaceAll(tweetStringBuilder, "\n", "\n> ");
         replaceAll(tweetStringBuilder, "#", "\\#");
         replaceAll(tweetStringBuilder, "^", "\\^");
 
-        for (ImageEntity imageEntity : tweet.getImageEntities()) {
+        for (RehostedImageEntity imageEntity : tweet.getRehostedImageEntityList()) {
             replaceAll(tweetStringBuilder, imageEntity.getUrl(), getImageLinks(imageEntity));
         }
         for (Map.Entry<String, String> entry : tweet.getUrlEntities().entrySet()) {
-            replaceAll(tweetStringBuilder, entry.getKey(), entry.getValue());
+            replaceAll(tweetStringBuilder, entry.getKey(), getNoParticipationRedditLink(entry.getValue()));
         }
         return tweetStringBuilder.toString();
     }
 
-    private String createRedditLink(String source, String name) {
+    private String getImageLinks(RehostedImageEntity entity) {
+        String result = createRedditHyperLink(entity.getExpandedUrl(), twitterPicLinkTemplate);
+        if (entity.getRehostedUrl() != null) {
+            result = result + " " + createRedditHyperLink(entity.getRehostedUrl(), imgurPicLinkTemplate);
+        }
+        return result;
+    }
+
+    private String createRedditHyperLink(String source, String name) {
         return "[" + name + "]" + "(" + source + ")";
     }
 
-    private String getImageLinks(ImageEntity entity) {
-        String result = createRedditLink(entity.getExpandedUrl(), twitterPicLink);
-        if (entity.isImageRehostedSuccessfully()) {
-            result = result + " " + createRedditLink(entity.getRehostedUrl(), imgurPicLink);
-        }
-        return result;
+    private String convertDateToString(DateTime dateTime) {
+        return dateTime.toDateTime(DateTimeZone.UTC).toString(datePattern);
+    }
+
+    private String getNoParticipationRedditLink(String url) {
+        return url.toLowerCase().replace("reddit.com", "np.reddit.com");
     }
 
     private void replaceAll(StringBuilder builder, String from, String to) {
@@ -80,19 +98,6 @@ public class ResponseCommentCreator {
             index += to.length();
             index = builder.indexOf(from, index);
         }
-    }
-
-    public String createResponseComment(List<Tweet> tweetList) {
-        String result = "";
-        for (Tweet tweet : tweetList) {
-            result += createResponseComment(tweet);
-        }
-        result += footerTemplate;
-        return result;
-    }
-
-    private String convertDateToString(DateTime dateTime) {
-        return dateTime.toDateTime(DateTimeZone.UTC).toString(datePattern);
     }
 
 

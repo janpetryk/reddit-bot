@@ -22,7 +22,7 @@ public class Tweet {
     private String poster;
     private DateTime datePosted;
     private Map<String, String> urlEntities;
-    private List<ImageEntity> imageEntities;
+    private Map<String, String> imageEntities;
 
     private Tweet(Builder builder) {
         this.id = builder.id;
@@ -30,7 +30,16 @@ public class Tweet {
         this.poster = builder.poster;
         this.datePosted = builder.datePosted;
         this.urlEntities = ImmutableMap.copyOf(builder.urlEntities);
-        this.imageEntities = ImmutableList.copyOf(builder.imageEntities);
+        this.imageEntities = ImmutableMap.copyOf(builder.imageEntities);
+    }
+
+    protected Tweet (Tweet tweet){
+        this.id = tweet.id;
+        this.body = tweet.body;
+        this.poster = tweet.poster;
+        this.datePosted = tweet.datePosted;
+        this.urlEntities = ImmutableMap.copyOf(tweet.urlEntities);
+        this.imageEntities = ImmutableMap.copyOf(tweet.imageEntities);
     }
 
     public long getId() {
@@ -57,7 +66,7 @@ public class Tweet {
         return getPosterProfileUrl() + "status/" + id;
     }
 
-    public List<ImageEntity> getImageEntities() {
+    public Map<String,String> getImageEntities() {
         return imageEntities;
     }
 
@@ -88,11 +97,11 @@ public class Tweet {
         private String poster;
         private DateTime datePosted;
         private Map<String, String> urlEntities;
-        private List<ImageEntity> imageEntities;
+        private Map<String,String> imageEntities;
 
         public Builder() {
             urlEntities = new HashMap<>();
-            imageEntities = new LinkedList<>();
+            imageEntities = new HashMap<>();
         }
 
         public Builder id(long id) {
@@ -121,7 +130,7 @@ public class Tweet {
         }
 
         public Builder addImageEntity(String key, String value) {
-            imageEntities.add(new ImageEntity(key, value));
+            imageEntities.put(key, value);
             return this;
         }
 

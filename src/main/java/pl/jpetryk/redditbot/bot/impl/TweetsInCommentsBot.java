@@ -2,15 +2,11 @@ package pl.jpetryk.redditbot.bot.impl;
 
 import org.json.JSONException;
 import pl.jpetryk.redditbot.bot.AbstractRedditBot;
-import pl.jpetryk.redditbot.connectors.ImgurConnector;
 import pl.jpetryk.redditbot.connectors.ImgurConnectorInterface;
 import pl.jpetryk.redditbot.connectors.RedditConnectorInterface;
 import pl.jpetryk.redditbot.connectors.TwitterConnectorInterface;
 import pl.jpetryk.redditbot.exceptions.TwitterApiException;
-import pl.jpetryk.redditbot.model.Comment;
-import pl.jpetryk.redditbot.model.ImageEntity;
-import pl.jpetryk.redditbot.model.ProcessCommentResult;
-import pl.jpetryk.redditbot.model.Tweet;
+import pl.jpetryk.redditbot.model.*;
 import pl.jpetryk.redditbot.utils.CommentParser;
 import pl.jpetryk.redditbot.utils.ResponseCommentCreator;
 
@@ -18,7 +14,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -58,33 +53,52 @@ public class TweetsInCommentsBot extends AbstractRedditBot {
 
     @Override
     protected ProcessCommentResult processComment(Comment comment) throws Exception {
-        try {
-            List<String> statusIdList = commentParser.getRegexGroup(comment, 3);
-            List<Tweet> tweetList = getTweetsThatAreNotAlreadyInComment(comment, statusIdList);
-            if (tweetList.isEmpty() || userNameBlackList.contains(comment.getAuthor().toLowerCase())) {
-                return ProcessCommentResult.doNotRespond();
-            } else {
-                String response = responseCommentCreator.createResponseComment(tweetList);
-                if (isTrashTalkThread(comment)) {
-                    response = response.toUpperCase();
+        if (userNameBlackList.contains(comment.getAuthor().toLowerCase())) {
+            return ProcessCommentResult.doNotRespond();
+        } else {
+            try {
+                List<String> statusIdList = commentParser.getRegexGroup(comment, 3);
+                List<Tweet> tweetList = getTweetsThatAreNotAlreadyInComment(comment, statusIdList);
+                if (tweetList.isEmpty()) {
+                    return ProcessCommentResult.doNotRespond();
+                } else {
+                    String response = responseCommentCreator.
+                            createResponseComment(getTweetWithRehostedImagesesList(tweetList));
+                    if (isTrashTalkThread(comment)) {
+                        response = response.toUpperCase();
+                    }
+                    return ProcessCommentResult.respondWith(response);
                 }
-                return ProcessCommentResult.respondWith(response);
+            } catch (TwitterApiException e) {
+                return handleException(comment, e);
             }
-        } catch (TwitterApiException e) {
-            return handleException(comment, e);
         }
     }
 
-    private void rehostImages(List<ImageEntity> imageEntities) {
-        for (ImageEntity imageEntity : imageEntities) {
-            String reuploadedImageUrl = null;
-            try {
-                reuploadedImageUrl = imgurConnector.reuploadImage(imageEntity.getExpandedUrl());
-            } catch (Exception e) {
-            }
-            imageEntity.setRehostedUrl(reuploadedImageUrl);
+    private List<TweetWithRehostedImages> getTweetWithRehostedImagesesList(List<Tweet> tweetList) {
+        List<TweetWithRehostedImages> result = new ArrayList<>();
+        for (Tweet tweet : tweetList) {
+            result.add(new TweetWithRehostedImages(tweet, getRehostedImages(tweet)));
         }
+
+        return result;
     }
+
+    private List<RehostedImageEntity> getRehostedImages(Tweet tweet) {
+        List<RehostedImageEntity> result = new ArrayList<>();
+        for (Map.Entry<String, String> entry : tweet.getImageEntities().entrySet()) {
+            String rehostedImageUrl = null;
+            try {
+                rehostedImageUrl = imgurConnector.reuploadImage(entry.getValue());
+            } catch (IOException | JSONException e) {
+                logger.error(e.getMessage(), e);
+            }
+            result.add(new RehostedImageEntity(entry.getKey(), entry.getValue(), rehostedImageUrl));
+        }
+
+        return result;
+    }
+
 
     private boolean isTrashTalkThread(Comment comment) {
         return comment.getLinkTitle().contains("TRASH TALK THREAD")
@@ -97,7 +111,6 @@ public class TweetsInCommentsBot extends AbstractRedditBot {
         for (String string : statusIdList) {
             Tweet tweet = twitterConnector.showStatus(Long.valueOf(string));
             if (!comment.getBody().contains(tweet.getBody())) {
-                rehostImages(tweet.getImageEntities());
                 tweetList.add(tweet);
             }
         }
