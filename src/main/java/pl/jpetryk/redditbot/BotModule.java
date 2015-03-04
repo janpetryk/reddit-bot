@@ -13,6 +13,7 @@ import pl.jpetryk.redditbot.utils.ResponseCommentCreator;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -38,8 +39,9 @@ public class BotModule extends AbstractModule {
             Names.bindProperties(binder(), botProperties.getProperties());
             bind(ImgurConnectorInterface.class).to(ImgurConnector.class);
             bind(RedditConnectorInterface.class).to(JrawRedditConnector.class);
-            bind(new TypeLiteral<List<String>>() {})
-                    .toInstance(Arrays.asList(botProperties.getProperty("blacklist").split(", ")));
+            List<String> blacklist = new ArrayList<>(Arrays.asList(botProperties.getProperty("blacklist").split(", ")));
+            blacklist.add(botProperties.getProperty("reddit-login"));
+            bind(new TypeLiteral<List<String>>() {}).toInstance(blacklist);
             bind(TweetsInCommentsBot.class);
         } catch (IOException e) {
             e.printStackTrace();
