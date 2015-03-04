@@ -51,22 +51,13 @@ public class Twitter4JConnector implements TwitterConnectorInterface {
 
     private void prepareEntities(Status status, Tweet.Builder tweetBuilder) {
         for (URLEntity urlEntity : status.getURLEntities()) {
-            String resultUrl = getNoParticipationRedditLink(urlEntity.getExpandedURL());
-            tweetBuilder.addUrlEntity(urlEntity.getURL(), resultUrl);
+            tweetBuilder.addUrlEntity(urlEntity.getURL(), urlEntity.getExpandedURL());
         }
         for (MediaEntity mediaEntity : status.getMediaEntities()) {
             tweetBuilder.addImageEntity(mediaEntity.getURL(), mediaEntity.getMediaURL());
         }
     }
 
-    private String getNoParticipationRedditLink(String url) {
-        String resultUrl;
-        if(url.toLowerCase().contains("reddit.com")){
-            resultUrl = url.replace("reddit.com", "np.reddit.com");
-        }else{
-            resultUrl = url;
-        }
-        return resultUrl;
-    }
+
 
 }
