@@ -9,6 +9,7 @@ import pl.jpetryk.redditbot.connectors.*;
 import pl.jpetryk.redditbot.utils.CommentParser;
 import pl.jpetryk.redditbot.utils.PropertiesReader;
 import pl.jpetryk.redditbot.utils.ResponseCommentCreator;
+import pl.jpetryk.redditbot.utils.ResponseCommentCreatorInterface;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,14 +35,15 @@ public class BotModule extends AbstractModule {
             bindConstant().annotatedWith(Names.named("footer-template")).to(
                     Files.toString(new File("resources/template/footer-template"), Charset.defaultCharset()));
 
-            bind(ResponseCommentCreator.class);
+            bind(ResponseCommentCreatorInterface.class).to(ResponseCommentCreator.class);
             PropertiesReader botProperties = new PropertiesReader("resources/bot.properties");
             Names.bindProperties(binder(), botProperties.getProperties());
             bind(ImgurConnectorInterface.class).to(ImgurConnector.class);
             bind(RedditConnectorInterface.class).to(JrawRedditConnector.class);
             List<String> blacklist = new ArrayList<>(Arrays.asList(botProperties.getProperty("blacklist").split(", ")));
             blacklist.add(botProperties.getProperty("reddit-login"));
-            bind(new TypeLiteral<List<String>>() {}).toInstance(blacklist);
+            bind(new TypeLiteral<List<String>>() {
+            }).toInstance(blacklist);
             bind(TweetsInCommentsBot.class);
         } catch (IOException e) {
             e.printStackTrace();

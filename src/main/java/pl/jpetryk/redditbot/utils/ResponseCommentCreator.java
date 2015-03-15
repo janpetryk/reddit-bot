@@ -3,6 +3,7 @@ package pl.jpetryk.redditbot.utils;
 import com.google.inject.Inject;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import pl.jpetryk.redditbot.model.Comment;
 import pl.jpetryk.redditbot.model.RehostedImageEntity;
 import pl.jpetryk.redditbot.model.Tweet;
 import pl.jpetryk.redditbot.model.TweetWithRehostedImages;
@@ -14,7 +15,7 @@ import java.util.Map;
 /**
  * Created by Jan on 17/01/15.
  */
-public class ResponseCommentCreator {
+public class ResponseCommentCreator implements ResponseCommentCreatorInterface {
 
     private String tweetResponseTemplate;
     private String footerTemplate;
@@ -36,7 +37,8 @@ public class ResponseCommentCreator {
 
     }
 
-    public String createResponseComment(List<TweetWithRehostedImages> tweetList) {
+    @Override
+    public String createResponseComment(List<TweetWithRehostedImages> tweetList, Comment comment) {
         String result = "";
         for (TweetWithRehostedImages tweet : tweetList) {
             result += createResponseComment(tweet);
@@ -58,9 +60,10 @@ public class ResponseCommentCreator {
 
     private String prepareTweetBody(TweetWithRehostedImages tweet) {
         StringBuilder tweetStringBuilder = new StringBuilder(tweet.getBody());
-        replaceAll(tweetStringBuilder, "\n", "\n> ");
+        replaceAll(tweetStringBuilder, "\n", "\n\n> ");
         replaceAll(tweetStringBuilder, "#", "\\#");
         replaceAll(tweetStringBuilder, "^", "\\^");
+        replaceAll(tweetStringBuilder, ">", "\\>");
 
         for (RehostedImageEntity imageEntity : tweet.getRehostedImageEntityList()) {
             replaceAll(tweetStringBuilder, imageEntity.getUrl(), getImageLinks(imageEntity));
@@ -88,7 +91,12 @@ public class ResponseCommentCreator {
     }
 
     private String getNoParticipationRedditLink(String url) {
-        return url.toLowerCase().replace("reddit.com", "np.reddit.com");
+        return url.replace("reddit.com", "np.reddit.com");
+    }
+
+    private boolean isTrashTalkThread(Comment comment) {
+        return comment.getLinkTitle().contains("TRASH TALK THREAD")
+                || comment.getLinkTitle().contains("THRASHTALK THREAD");
     }
 
     private void replaceAll(StringBuilder builder, String from, String to) {
@@ -99,6 +107,5 @@ public class ResponseCommentCreator {
             index = builder.indexOf(from, index);
         }
     }
-
 
 }

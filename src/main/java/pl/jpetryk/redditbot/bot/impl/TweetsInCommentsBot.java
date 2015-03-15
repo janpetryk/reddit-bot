@@ -8,7 +8,7 @@ import pl.jpetryk.redditbot.connectors.TwitterConnectorInterface;
 import pl.jpetryk.redditbot.exceptions.TwitterApiException;
 import pl.jpetryk.redditbot.model.*;
 import pl.jpetryk.redditbot.utils.CommentParser;
-import pl.jpetryk.redditbot.utils.ResponseCommentCreator;
+import pl.jpetryk.redditbot.utils.ResponseCommentCreatorInterface;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -26,7 +26,7 @@ public class TweetsInCommentsBot extends AbstractRedditBot {
 
     private TwitterConnectorInterface twitterConnector;
 
-    private ResponseCommentCreator responseCommentCreator;
+    private ResponseCommentCreatorInterface responseCommentCreator;
 
     private List<String> userNameBlackList;
 
@@ -38,7 +38,7 @@ public class TweetsInCommentsBot extends AbstractRedditBot {
                                ImgurConnectorInterface imgurConnector,
                                CommentParser commentParser,
                                @Named("subreddits") String subreddits,
-                               ResponseCommentCreator responseCommentCreator,
+                               ResponseCommentCreatorInterface responseCommentCreator,
                                List<String> userNameBlackList) {
         super(redditConnectorInterface, subreddits);
         this.twitterConnector = twitterConnector;
@@ -53,38 +53,37 @@ public class TweetsInCommentsBot extends AbstractRedditBot {
 
     @Override
     protected ProcessCommentResult processComment(Comment comment) throws Exception {
+        ProcessCommentResult result;
         if (userNameBlackList.contains(comment.getAuthor().toLowerCase())) {
-            return ProcessCommentResult.doNotRespond();
+            result = ProcessCommentResult.doNotRespond();
         } else {
             try {
                 List<String> statusIdList = commentParser.getRegexGroup(comment, 3);
-                List<Tweet> tweetList = getTweetsThatAreNotAlreadyInComment(comment, statusIdList);
-                if (tweetList.isEmpty()) {
-                    return ProcessCommentResult.doNotRespond();
+                List<Tweet> tweetList = readTweets(statusIdList);
+                List<Tweet> filteredTweetList = filterOutTweetsThatAreAlreadyInComment(comment, tweetList);
+                if (filteredTweetList.isEmpty()) {
+                    result = ProcessCommentResult.doNotRespond();
                 } else {
                     String response = responseCommentCreator.
-                            createResponseComment(getTweetWithRehostedImagesesList(tweetList));
-                    if (isTrashTalkThread(comment)) {
-                        response = response.toUpperCase();
-                    }
-                    return ProcessCommentResult.respondWith(response);
+                            createResponseComment(getTweetWithRehostedImagesList(filteredTweetList), comment);
+                    result = ProcessCommentResult.respondWith(response);
                 }
             } catch (TwitterApiException e) {
-                return handleException(comment, e);
+                result = handleException(comment, e);
             }
         }
-    }
-
-    private List<TweetWithRehostedImages> getTweetWithRehostedImagesesList(List<Tweet> tweetList) {
-        List<TweetWithRehostedImages> result = new ArrayList<>();
-        for (Tweet tweet : tweetList) {
-            result.add(new TweetWithRehostedImages(tweet, getRehostedImages(tweet)));
-        }
-
         return result;
     }
 
-    private List<RehostedImageEntity> getRehostedImages(Tweet tweet) {
+    private List<TweetWithRehostedImages> getTweetWithRehostedImagesList(List<Tweet> tweetList) {
+        List<TweetWithRehostedImages> result = new ArrayList<>();
+        for (Tweet tweet : tweetList) {
+            result.add(new TweetWithRehostedImages(tweet, rehostTweetImages(tweet)));
+        }
+        return result;
+    }
+
+    private List<RehostedImageEntity> rehostTweetImages(Tweet tweet) {
         List<RehostedImageEntity> result = new ArrayList<>();
         for (Map.Entry<String, String> entry : tweet.getImageEntities().entrySet()) {
             String rehostedImageUrl = null;
@@ -95,26 +94,25 @@ public class TweetsInCommentsBot extends AbstractRedditBot {
             }
             result.add(new RehostedImageEntity(entry.getKey(), entry.getValue(), rehostedImageUrl));
         }
-
         return result;
     }
 
-
-    private boolean isTrashTalkThread(Comment comment) {
-        return comment.getLinkTitle().contains("TRASH TALK THREAD")
-                || comment.getLinkTitle().contains("THRASHTALK THREAD");
-    }
-
-    private List<Tweet> getTweetsThatAreNotAlreadyInComment(Comment comment, List<String> statusIdList)
-            throws Exception {
+    private List<Tweet> readTweets(List<String> statusIdList) throws TwitterApiException {
         List<Tweet> tweetList = new ArrayList<>();
         for (String string : statusIdList) {
-            Tweet tweet = twitterConnector.showStatus(Long.valueOf(string));
-            if (!comment.getBody().contains(tweet.getBody())) {
-                tweetList.add(tweet);
-            }
+            tweetList.add(twitterConnector.showStatus(Long.valueOf(string)));
         }
         return tweetList;
+    }
+
+    private List<Tweet> filterOutTweetsThatAreAlreadyInComment(Comment comment, List<Tweet> tweetList){
+        List<Tweet> result= new ArrayList<>();
+        for (Tweet tweet : tweetList) {
+            if (!comment.getBody().contains(tweet.getBody())) {
+                result.add(tweet);
+            }
+        }
+        return result;
     }
 
     private ProcessCommentResult handleException(Comment comment, TwitterApiException e) throws Exception {
