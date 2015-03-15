@@ -60,11 +60,7 @@ public class ResponseCommentCreator implements ResponseCommentCreatorInterface {
 
     private String prepareTweetBody(TweetWithRehostedImages tweet) {
         StringBuilder tweetStringBuilder = new StringBuilder(tweet.getBody());
-        replaceAll(tweetStringBuilder, "\n", "\n\n> ");
-        replaceAll(tweetStringBuilder, "#", "\\#");
-        replaceAll(tweetStringBuilder, "^", "\\^");
-        replaceAll(tweetStringBuilder, ">", "\\>");
-
+        replaceRedditSpecialCharacters(tweetStringBuilder);
         for (RehostedImageEntity imageEntity : tweet.getRehostedImageEntityList()) {
             replaceAll(tweetStringBuilder, imageEntity.getUrl(), getImageLinks(imageEntity));
         }
@@ -72,6 +68,13 @@ public class ResponseCommentCreator implements ResponseCommentCreatorInterface {
             replaceAll(tweetStringBuilder, entry.getKey(), getNoParticipationRedditLink(entry.getValue()));
         }
         return tweetStringBuilder.toString();
+    }
+
+    private void replaceRedditSpecialCharacters(StringBuilder tweetStringBuilder) {
+        replaceAll(tweetStringBuilder, ">", "\\>");
+        replaceAll(tweetStringBuilder, "\n", "\n\n> ");
+        replaceAll(tweetStringBuilder, "#", "\\#");
+        replaceAll(tweetStringBuilder, "^", "\\^");
     }
 
     private String getImageLinks(RehostedImageEntity entity) {
