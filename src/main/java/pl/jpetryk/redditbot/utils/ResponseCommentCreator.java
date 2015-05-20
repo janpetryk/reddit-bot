@@ -5,7 +5,6 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import pl.jpetryk.redditbot.model.Comment;
 import pl.jpetryk.redditbot.model.RehostedImageEntity;
-import pl.jpetryk.redditbot.model.Tweet;
 import pl.jpetryk.redditbot.model.TweetWithRehostedImages;
 
 import javax.inject.Named;
@@ -49,7 +48,7 @@ public class ResponseCommentCreator implements ResponseCommentCreatorInterface {
 
     private String createResponseComment(TweetWithRehostedImages tweet) {
         StringBuilder result = new StringBuilder(tweetResponseTemplate);
-        replaceAll(result, "${posterScreenName}", tweet.getPosterScreenName());
+        replaceAll(result, "${posterScreenName}", escapeRedditSpecialCharacters(tweet.getPosterScreenName()));
         replaceAll(result, "${posterProfileUrl}", tweet.getPosterProfileUrl());
         replaceAll(result, "${datePosted}",
                 convertDateToString(tweet.getDatePosted()));
@@ -59,8 +58,7 @@ public class ResponseCommentCreator implements ResponseCommentCreatorInterface {
     }
 
     private String prepareTweetBody(TweetWithRehostedImages tweet) {
-        StringBuilder tweetStringBuilder = new StringBuilder(tweet.getBody());
-        replaceRedditSpecialCharacters(tweetStringBuilder);
+        StringBuilder tweetStringBuilder = new StringBuilder(escapeRedditSpecialCharacters(tweet.getBody()));
         for (RehostedImageEntity imageEntity : tweet.getRehostedImageEntityList()) {
             replaceAll(tweetStringBuilder, imageEntity.getUrl(), getImageLinks(imageEntity));
         }
@@ -70,12 +68,7 @@ public class ResponseCommentCreator implements ResponseCommentCreatorInterface {
         return tweetStringBuilder.toString();
     }
 
-    private void replaceRedditSpecialCharacters(StringBuilder tweetStringBuilder) {
-        replaceAll(tweetStringBuilder, ">", "\\>");
-        replaceAll(tweetStringBuilder, "\n", "\n\n> ");
-        replaceAll(tweetStringBuilder, "#", "\\#");
-        replaceAll(tweetStringBuilder, "^", "\\^");
-    }
+
 
     private String getImageLinks(RehostedImageEntity entity) {
         String result = createRedditHyperLink(entity.getExpandedUrl(), twitterPicLinkTemplate);
@@ -100,6 +93,17 @@ public class ResponseCommentCreator implements ResponseCommentCreatorInterface {
     private boolean isTrashTalkThread(Comment comment) {
         return comment.getLinkTitle().contains("TRASH TALK THREAD")
                 || comment.getLinkTitle().contains("THRASHTALK THREAD");
+    }
+
+    private String escapeRedditSpecialCharacters(String string) {
+        StringBuilder tweetStringBuilder = new StringBuilder(string);
+        replaceAll(tweetStringBuilder, ">", "\\>");
+        replaceAll(tweetStringBuilder, "\n", "\n\n> ");
+        replaceAll(tweetStringBuilder, "#", "\\#");
+        replaceAll(tweetStringBuilder, "^", "\\^");
+        replaceAll(tweetStringBuilder, "*", "\\*");
+        replaceAll(tweetStringBuilder, "_", "\\_");
+        return tweetStringBuilder.toString();
     }
 
     private void replaceAll(StringBuilder builder, String from, String to) {
