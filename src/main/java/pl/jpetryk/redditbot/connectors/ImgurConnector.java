@@ -3,6 +3,7 @@ package pl.jpetryk.redditbot.connectors;
 import com.squareup.okhttp.OkHttpClient;
 import org.json.JSONException;
 import org.json.JSONObject;
+import pl.jpetryk.redditbot.exceptions.ImgurException;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -28,20 +29,22 @@ public class ImgurConnector implements ImgurConnectorInterface {
     }
 
     @Override
-    public String reuploadImage(String imageURL) throws IOException, JSONException {
-        URL url = new URL(IMAGE_UPLOAD_URL);
-
-        String data = URLEncoder.encode("image", "UTF-8") + "="
-                + URLEncoder.encode(imageURL, "UTF-8");
-        HttpURLConnection conn = getHttpURLConnection(url);
-        conn.connect();
-        OutputStreamWriter outputWriter = new OutputStreamWriter(conn.getOutputStream());
-        outputWriter.write(data);
-        outputWriter.flush();
-
-        JSONObject json = new JSONObject(readResponse(conn));
-        outputWriter.close();
-        return json.getJSONObject("data").getString("link");
+    public String reuploadImage(String imageURL) throws ImgurException {
+        try {
+            URL url = new URL(IMAGE_UPLOAD_URL);
+            String data = URLEncoder.encode("image", "UTF-8") + "="
+                    + URLEncoder.encode(imageURL, "UTF-8");
+            HttpURLConnection conn = getHttpURLConnection(url);
+            conn.connect();
+            OutputStreamWriter outputWriter = new OutputStreamWriter(conn.getOutputStream());
+            outputWriter.write(data);
+            outputWriter.flush();
+            JSONObject json = new JSONObject(readResponse(conn));
+            outputWriter.close();
+            return json.getJSONObject("data").getString("link");
+        } catch (IOException | JSONException e) {
+            throw new ImgurException(e);
+        }
     }
 
     private String readResponse(HttpURLConnection conn) throws IOException {

@@ -58,7 +58,7 @@ public class CommentParserTest {
         String body = "asdadsasdads";
         Comment comment = prepareComment(body);
         Assert.assertFalse(parser.commentMatchesRegex(comment));
-        Assert.assertEquals(0, parser.getRegexGroup(comment, 3).size());
+        Assert.assertEquals(0, parser.getTwitterLinksFromComment(comment).size());
     }
 
     @Test
@@ -76,7 +76,7 @@ public class CommentParserTest {
     }
 
     private void assertSelectedGroupIsEqualToGiven(String body, String twitterLink) {
-        for (String string : parser.getRegexGroup(prepareComment(body), 3)) {
+        for (String string : parser.getTwitterLinksFromComment(prepareComment(body))) {
             if (twitterLink.equals(string)) {
                 return;
             }

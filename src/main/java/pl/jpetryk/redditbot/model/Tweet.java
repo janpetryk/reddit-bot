@@ -1,8 +1,7 @@
 package pl.jpetryk.redditbot.model;
 
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.*;
 import org.joda.time.DateTime;
 
 import java.util.HashMap;
@@ -22,7 +21,7 @@ public class Tweet {
     private String poster;
     private DateTime datePosted;
     private Map<String, String> urlEntities;
-    private Map<String, String> imageEntities;
+    private Multimap<String, String> imageEntities;
 
     private Tweet(Builder builder) {
         this.id = builder.id;
@@ -30,7 +29,7 @@ public class Tweet {
         this.poster = builder.poster;
         this.datePosted = builder.datePosted;
         this.urlEntities = ImmutableMap.copyOf(builder.urlEntities);
-        this.imageEntities = ImmutableMap.copyOf(builder.imageEntities);
+        this.imageEntities = ImmutableMultimap.copyOf(builder.imageEntities);
     }
 
     protected Tweet (Tweet tweet){
@@ -39,7 +38,7 @@ public class Tweet {
         this.poster = tweet.poster;
         this.datePosted = tweet.datePosted;
         this.urlEntities = ImmutableMap.copyOf(tweet.urlEntities);
-        this.imageEntities = ImmutableMap.copyOf(tweet.imageEntities);
+        this.imageEntities = ImmutableMultimap.copyOf(tweet.imageEntities);
     }
 
     public long getId() {
@@ -66,7 +65,7 @@ public class Tweet {
         return getPosterProfileUrl() + "status/" + id;
     }
 
-    public Map<String,String> getImageEntities() {
+    public Multimap<String,String> getImageEntities() {
         return imageEntities;
     }
 
@@ -97,11 +96,11 @@ public class Tweet {
         private String poster;
         private DateTime datePosted;
         private Map<String, String> urlEntities;
-        private Map<String,String> imageEntities;
+        private Multimap<String,String> imageEntities;
 
         public Builder() {
             urlEntities = new HashMap<>();
-            imageEntities = new HashMap<>();
+            imageEntities = HashMultimap.create();
         }
 
         public Builder id(long id) {

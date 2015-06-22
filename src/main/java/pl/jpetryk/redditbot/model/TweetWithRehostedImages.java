@@ -1,6 +1,8 @@
 package pl.jpetryk.redditbot.model;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Multimap;
 
 import java.util.List;
 
@@ -10,14 +12,14 @@ import java.util.List;
 public class TweetWithRehostedImages extends Tweet {
 
 
-    private List<RehostedImageEntity> rehostedImageEntityList;
+    private Multimap<String, RehostedImageEntity> rehostedImageEntityMultimap;
 
-    public TweetWithRehostedImages(Tweet tweet, List<RehostedImageEntity> rehostedImageEntities) {
+    public TweetWithRehostedImages(Tweet tweet, Multimap<String, RehostedImageEntity> rehostedImageEntities) {
         super(tweet);
-        this.rehostedImageEntityList = ImmutableList.copyOf(rehostedImageEntities);
+        this.rehostedImageEntityMultimap = ImmutableMultimap.copyOf(rehostedImageEntities);
     }
 
-    public List<RehostedImageEntity> getRehostedImageEntityList() {
-        return rehostedImageEntityList;
+    public Multimap<String, RehostedImageEntity> getRehostedImageEntities() {
+        return rehostedImageEntityMultimap;
     }
 }

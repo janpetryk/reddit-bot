@@ -5,22 +5,16 @@ package pl.jpetryk.redditbot.model;
  */
 public class RehostedImageEntity {
 
-    private String url;
-    private String expandedUrl;
+    private String originalUrl;
     private String rehostedUrl;
 
-    public RehostedImageEntity(String url, String expandedUrl, String rehostedUrl) {
-        this.url = url;
-        this.expandedUrl = expandedUrl;
+    public RehostedImageEntity(String originalUrl, String rehostedUrl) {
+        this.originalUrl = originalUrl;
         this.rehostedUrl = rehostedUrl;
     }
 
-    public String getUrl() {
-        return url;
-    }
-
-    public String getExpandedUrl() {
-        return expandedUrl;
+    public String getOriginalUrl() {
+        return originalUrl;
     }
 
     public String getRehostedUrl() {

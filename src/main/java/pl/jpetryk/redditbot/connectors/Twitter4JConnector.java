@@ -53,11 +53,8 @@ public class Twitter4JConnector implements TwitterConnectorInterface {
         for (URLEntity urlEntity : status.getURLEntities()) {
             tweetBuilder.addUrlEntity(urlEntity.getURL(), urlEntity.getExpandedURL());
         }
-        for (MediaEntity mediaEntity : status.getMediaEntities()) {
+        for (MediaEntity mediaEntity : status.getExtendedMediaEntities()) {
             tweetBuilder.addImageEntity(mediaEntity.getURL(), mediaEntity.getMediaURL());
         }
     }
-
-
-
 }

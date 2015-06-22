@@ -1,10 +1,12 @@
 package pl.jpetryk.redditbot.bot.impl;
 
-import org.json.JSONException;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import pl.jpetryk.redditbot.bot.AbstractRedditBot;
 import pl.jpetryk.redditbot.connectors.ImgurConnectorInterface;
 import pl.jpetryk.redditbot.connectors.RedditConnectorInterface;
 import pl.jpetryk.redditbot.connectors.TwitterConnectorInterface;
+import pl.jpetryk.redditbot.exceptions.ImgurException;
 import pl.jpetryk.redditbot.exceptions.TwitterApiException;
 import pl.jpetryk.redditbot.model.*;
 import pl.jpetryk.redditbot.utils.CommentParser;
@@ -12,8 +14,8 @@ import pl.jpetryk.redditbot.utils.ResponseCommentCreatorInterface;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -58,7 +60,7 @@ public class TweetsInCommentsBot extends AbstractRedditBot {
             result = ProcessCommentResult.doNotRespond();
         } else {
             try {
-                List<String> statusIdList = commentParser.getRegexGroup(comment, 3);
+                List<String> statusIdList = commentParser.getTwitterLinksFromComment(comment);
                 List<Tweet> tweetList = readTweets(statusIdList);
                 List<Tweet> filteredTweetList = filterOutTweetsThatAreAlreadyInComment(comment, tweetList);
                 if (filteredTweetList.isEmpty()) {
@@ -83,16 +85,17 @@ public class TweetsInCommentsBot extends AbstractRedditBot {
         return result;
     }
 
-    private List<RehostedImageEntity> rehostTweetImages(Tweet tweet) {
-        List<RehostedImageEntity> result = new ArrayList<>();
-        for (Map.Entry<String, String> entry : tweet.getImageEntities().entrySet()) {
-            String rehostedImageUrl = null;
-            try {
-                rehostedImageUrl = imgurConnector.reuploadImage(entry.getValue());
-            } catch (IOException | JSONException e) {
-                logger.error(e.getMessage(), e);
+    private Multimap<String, RehostedImageEntity> rehostTweetImages(Tweet tweet) {
+        Multimap<String, RehostedImageEntity> result = HashMultimap.create();
+        try {
+            for (Map.Entry<String, Collection<String>> entry : tweet.getImageEntities().asMap().entrySet()) {
+                for (String originalUrl : entry.getValue()) {
+                    String rehostedImageUrl = imgurConnector.reuploadImage(originalUrl);
+                    result.put(entry.getKey(), new RehostedImageEntity(originalUrl, rehostedImageUrl));
+                }
             }
-            result.add(new RehostedImageEntity(entry.getKey(), entry.getValue(), rehostedImageUrl));
+        } catch (ImgurException e) {
+            logger.error(e.getMessage(), e);
         }
         return result;
     }
@@ -105,8 +108,8 @@ public class TweetsInCommentsBot extends AbstractRedditBot {
         return tweetList;
     }
 
-    private List<Tweet> filterOutTweetsThatAreAlreadyInComment(Comment comment, List<Tweet> tweetList){
-        List<Tweet> result= new ArrayList<>();
+    private List<Tweet> filterOutTweetsThatAreAlreadyInComment(Comment comment, List<Tweet> tweetList) {
+        List<Tweet> result = new ArrayList<>();
         for (Tweet tweet : tweetList) {
             if (!comment.getBody().contains(tweet.getBody())) {
                 result.add(tweet);

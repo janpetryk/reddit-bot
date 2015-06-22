@@ -13,6 +13,8 @@ import java.util.regex.Pattern;
  */
 public class CommentParser {
 
+    private static final int TWITTER_LINK_REGEX_GROUP = 3;
+
     private Pattern pattern;
 
     @Inject
@@ -26,11 +28,11 @@ public class CommentParser {
     }
 
 
-    public List<String> getRegexGroup(Comment comment, int groupId) {
+    public List<String> getTwitterLinksFromComment(Comment comment) {
         List<String> twitterLinks = new ArrayList<>();
         Matcher matcher = pattern.matcher(comment.getBody());
         while (matcher.find()) {
-            twitterLinks.add(matcher.group(groupId));
+            twitterLinks.add(matcher.group(TWITTER_LINK_REGEX_GROUP));
         }
         return twitterLinks;
     }

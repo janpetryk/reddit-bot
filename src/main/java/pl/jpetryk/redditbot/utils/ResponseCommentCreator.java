@@ -8,6 +8,8 @@ import pl.jpetryk.redditbot.model.RehostedImageEntity;
 import pl.jpetryk.redditbot.model.TweetWithRehostedImages;
 
 import javax.inject.Named;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -40,38 +42,45 @@ public class ResponseCommentCreator implements ResponseCommentCreatorInterface {
     public String createResponseComment(List<TweetWithRehostedImages> tweetList, Comment comment) {
         String result = "";
         for (TweetWithRehostedImages tweet : tweetList) {
-            result += createResponseComment(tweet);
+            result += createResponseComment(tweet, comment);
         }
         result += footerTemplate;
         return result;
     }
 
-    private String createResponseComment(TweetWithRehostedImages tweet) {
+    private String createResponseComment(TweetWithRehostedImages tweet, Comment comment) {
         StringBuilder result = new StringBuilder(tweetResponseTemplate);
         replaceAll(result, "${posterScreenName}", escapeRedditSpecialCharacters(tweet.getPosterScreenName()));
         replaceAll(result, "${posterProfileUrl}", tweet.getPosterProfileUrl());
         replaceAll(result, "${datePosted}",
                 convertDateToString(tweet.getDatePosted()));
         replaceAll(result, "${tweetUrl}", tweet.getTweetUrl());
-        replaceAll(result, "${body}", prepareTweetBody(tweet));
+        replaceAll(result, "${body}", isTrashTalkThread(comment) ? prepareTweetBody(tweet).toUpperCase() : prepareTweetBody(tweet));
         return result.toString();
     }
 
     private String prepareTweetBody(TweetWithRehostedImages tweet) {
         StringBuilder tweetStringBuilder = new StringBuilder(escapeRedditSpecialCharacters(tweet.getBody()));
-        for (RehostedImageEntity imageEntity : tweet.getRehostedImageEntityList()) {
-            replaceAll(tweetStringBuilder, imageEntity.getUrl(), getImageLinks(imageEntity));
+        for (Map.Entry<String, Collection<RehostedImageEntity>> entry : tweet.getRehostedImageEntities().asMap().entrySet()) {
+            replaceAll(tweetStringBuilder, entry.getKey(), getImageLinks(entry.getValue()));
         }
         for (Map.Entry<String, String> entry : tweet.getUrlEntities().entrySet()) {
             replaceAll(tweetStringBuilder, entry.getKey(), getNoParticipationRedditLink(entry.getValue()));
         }
         return tweetStringBuilder.toString();
     }
+    
+    private String getImageLinks(Collection<RehostedImageEntity> rehostedImageEntities){
+        StringBuilder result = new StringBuilder();
+        for(RehostedImageEntity entity : rehostedImageEntities){
+            result.append("\n\n>");
+            result.append(createRedditImageWithRehostLink(entity));
+        }
+        return result.toString();
+    }
 
-
-
-    private String getImageLinks(RehostedImageEntity entity) {
-        String result = createRedditHyperLink(entity.getExpandedUrl(), twitterPicLinkTemplate);
+    private String createRedditImageWithRehostLink(RehostedImageEntity entity) {
+        String result = createRedditHyperLink(entity.getOriginalUrl(), twitterPicLinkTemplate);
         if (entity.getRehostedUrl() != null) {
             result = result + " " + createRedditHyperLink(entity.getRehostedUrl(), imgurPicLinkTemplate);
         }
