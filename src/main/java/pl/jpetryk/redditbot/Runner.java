@@ -1,26 +1,14 @@
 package pl.jpetryk.redditbot;
 
-import com.google.common.io.Files;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.log4j.*;
 
 import pl.jpetryk.redditbot.bot.AbstractRedditBot;
 import pl.jpetryk.redditbot.bot.impl.TweetsInCommentsBot;
-import pl.jpetryk.redditbot.connectors.*;
-import pl.jpetryk.redditbot.exceptions.NetworkConnectionException;
-import pl.jpetryk.redditbot.exceptions.RedditApiException;
-import pl.jpetryk.redditbot.utils.CommentParser;
 import pl.jpetryk.redditbot.utils.PropertiesReader;
-import pl.jpetryk.redditbot.utils.ResponseCommentCreator;
 
-import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Array;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * Created by Jan on 06/01/15.

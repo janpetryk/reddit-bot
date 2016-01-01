@@ -1,4 +1,4 @@
-package pl.jpetryk.redditbot.utils;
+package pl.jpetryk.redditbot.parser;
 
 import pl.jpetryk.redditbot.model.Comment;
 
@@ -11,14 +11,14 @@ import java.util.regex.Pattern;
 /**
  * Created by Jan on 07/12/14.
  */
-public class CommentParser {
+public class BaseCommentParser implements CommentParser {
 
     private static final int TWITTER_LINK_REGEX_GROUP = 3;
 
     private Pattern pattern;
 
     @Inject
-    public CommentParser(@Named("twitter-status-regex") String regex) {
+    public BaseCommentParser(@Named("twitter-status-regex") String regex) {
         this.pattern = Pattern.compile(regex);
     }
 
@@ -28,7 +28,8 @@ public class CommentParser {
     }
 
 
-    public List<String> getTwitterLinksFromComment(Comment comment) {
+    @Override
+    public List<String> getTwitterStatusIdsFromComment(Comment comment) {
         List<String> twitterLinks = new ArrayList<>();
         Matcher matcher = pattern.matcher(comment.getBody());
         while (matcher.find()) {

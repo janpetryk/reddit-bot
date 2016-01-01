@@ -9,7 +9,7 @@ import pl.jpetryk.redditbot.connectors.TwitterConnectorInterface;
 import pl.jpetryk.redditbot.exceptions.ImgurException;
 import pl.jpetryk.redditbot.exceptions.TwitterApiException;
 import pl.jpetryk.redditbot.model.*;
-import pl.jpetryk.redditbot.utils.CommentParser;
+import pl.jpetryk.redditbot.parser.CommentParser;
 import pl.jpetryk.redditbot.utils.ResponseCommentCreatorInterface;
 
 import javax.inject.Inject;
@@ -60,7 +60,7 @@ public class TweetsInCommentsBot extends AbstractRedditBot {
             result = ProcessCommentResult.doNotRespond();
         } else {
             try {
-                List<String> statusIdList = commentParser.getTwitterLinksFromComment(comment);
+                List<String> statusIdList = commentParser.getTwitterStatusIdsFromComment(comment);
                 List<Tweet> tweetList = readTweets(statusIdList);
                 List<Tweet> filteredTweetList = filterOutTweetsThatAreAlreadyInComment(comment, tweetList);
                 if (filteredTweetList.isEmpty()) {

@@ -11,24 +11,22 @@ public class PostCommentResult {
 
     private String errorMessage;
 
-    private boolean shouldBeDeleted;
 
-    private final static PostCommentResult DELETED = new PostCommentResult(false, null, "comment deleted", true);
-    private final static PostCommentResult BANNED = new PostCommentResult(false, null, "probably banned from this sub", true);
+    private final static PostCommentResult DELETED = new PostCommentResult(false, null, "comment deleted");
+    private final static PostCommentResult BANNED = new PostCommentResult(false, null, "probably banned from this sub");
 
-    private PostCommentResult(boolean successful, String responseCommentId, String errorMessage, boolean shouldBeDeleted) {
+    private PostCommentResult(boolean successful, String responseCommentId, String errorMessage) {
         this.successful = successful;
         this.responseCommentId = responseCommentId;
         this.errorMessage = errorMessage;
-        this.shouldBeDeleted = shouldBeDeleted;
     }
 
     public static PostCommentResult successful(String responseCommentId) {
-        return new PostCommentResult(true, responseCommentId, null, true);
+        return new PostCommentResult(true, responseCommentId, null);
     }
 
     public static PostCommentResult unsuccessful(String errorMessage) {
-        return new PostCommentResult(false, null, errorMessage, false);
+        return new PostCommentResult(false, null, errorMessage);
     }
 
     public static PostCommentResult commentDeleted() {
@@ -49,9 +47,5 @@ public class PostCommentResult {
 
     public String getErrorMessage() {
         return errorMessage;
-    }
-
-    public boolean shouldBeDeleted() {
-        return shouldBeDeleted;
     }
 }

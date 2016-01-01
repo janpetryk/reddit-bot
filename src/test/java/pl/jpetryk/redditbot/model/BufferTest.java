@@ -1,4 +1,4 @@
-package pl.jpetryk.redditbot;
+package pl.jpetryk.redditbot.model;
 
 import org.junit.Assert;
 import org.junit.Test;
