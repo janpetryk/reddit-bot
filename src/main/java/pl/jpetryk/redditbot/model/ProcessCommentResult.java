@@ -9,7 +9,7 @@ public class ProcessCommentResult {
 
     private String responseMessage;
 
-    private static final ProcessCommentResult DO_NOT_RESPOND = new ProcessCommentResult(false, null);
+    public static final ProcessCommentResult DO_NOT_RESPOND = new ProcessCommentResult(false, null);
 
     private ProcessCommentResult(boolean shouldRespond, String responseMessage) {
         this.shouldRespond = shouldRespond;

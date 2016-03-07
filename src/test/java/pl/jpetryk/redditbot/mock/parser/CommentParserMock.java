@@ -7,7 +7,6 @@ import pl.jpetryk.redditbot.parser.CommentParser;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.TreeSet;
 
 /**
  * Created by Jan on 2015-12-30.
@@ -19,7 +18,7 @@ public class CommentParserMock implements CommentParser {
 
 
     @Override
-    public List<String> getTwitterStatusIdsFromComment(Comment comment) {
+    public Collection<String> getTwitterStatusIdsFromComment(Comment comment) {
         List<String> result = new ArrayList<>();
         if (Integer.valueOf(comment.getCommentId()) % 10 == 0) {
             result.add(comment.getCommentId());

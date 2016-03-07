@@ -60,7 +60,7 @@ public class TweetsInCommentsBot extends AbstractRedditBot {
             result = ProcessCommentResult.doNotRespond();
         } else {
             try {
-                List<String> statusIdList = commentParser.getTwitterStatusIdsFromComment(comment);
+                Collection<String> statusIdList = commentParser.getTwitterStatusIdsFromComment(comment);
                 List<Tweet> tweetList = readTweets(statusIdList);
                 List<Tweet> filteredTweetList = filterOutTweetsThatAreAlreadyInComment(comment, tweetList);
                 if (filteredTweetList.isEmpty()) {
@@ -100,7 +100,7 @@ public class TweetsInCommentsBot extends AbstractRedditBot {
         return result;
     }
 
-    private List<Tweet> readTweets(List<String> statusIdList) throws TwitterApiException {
+    private List<Tweet> readTweets(Collection<String> statusIdList) throws TwitterApiException {
         List<Tweet> tweetList = new ArrayList<>();
         for (String string : statusIdList) {
             tweetList.add(twitterConnector.showStatus(Long.valueOf(string)));

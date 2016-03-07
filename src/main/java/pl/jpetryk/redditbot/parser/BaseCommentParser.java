@@ -29,8 +29,8 @@ public class BaseCommentParser implements CommentParser {
 
 
     @Override
-    public List<String> getTwitterStatusIdsFromComment(Comment comment) {
-        List<String> twitterLinks = new ArrayList<>();
+    public Collection<String> getTwitterStatusIdsFromComment(Comment comment) {
+        Set<String> twitterLinks = new LinkedHashSet<>();
         Matcher matcher = pattern.matcher(comment.getBody());
         while (matcher.find()) {
             twitterLinks.add(matcher.group(TWITTER_LINK_REGEX_GROUP));
