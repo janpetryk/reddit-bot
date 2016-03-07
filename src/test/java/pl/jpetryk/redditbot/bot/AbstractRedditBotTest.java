@@ -27,6 +27,7 @@ public class AbstractRedditBotTest {
             bot.run();
             Thread.sleep(Long.valueOf(redditProperties.getProperty("run-interval")));
         }
+        Thread.sleep(Long.valueOf(redditProperties.getProperty("run-interval")));
         Assert.assertEquals(commentParserMock.getMatchingCommentFullIdCollection(),
                 redditConnectorMock.getRespondedToCommentsFullIdCollection());
 
