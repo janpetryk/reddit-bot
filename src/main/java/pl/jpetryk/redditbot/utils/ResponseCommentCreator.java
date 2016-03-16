@@ -50,7 +50,7 @@ public class ResponseCommentCreator implements ResponseCommentCreatorInterface {
 
     private String createResponseComment(TweetWithRehostedImages tweet, Comment comment) {
         StringBuilder result = new StringBuilder(tweetResponseTemplate);
-        replaceAll(result, "${posterScreenName}", escapeRedditSpecialCharacters(tweet.getPosterScreenName()));
+        replaceAll(result, "${posterScreenName}", FormattingUtils.escapeRedditSpecialCharacters(tweet.getPosterScreenName()));
         replaceAll(result, "${posterProfileUrl}", tweet.getPosterProfileUrl());
         replaceAll(result, "${datePosted}",
                 convertDateToString(tweet.getDatePosted()));
@@ -60,12 +60,12 @@ public class ResponseCommentCreator implements ResponseCommentCreatorInterface {
     }
 
     private String prepareTweetBody(TweetWithRehostedImages tweet) {
-        StringBuilder tweetStringBuilder = new StringBuilder(escapeRedditSpecialCharacters(tweet.getBody()));
+        StringBuilder tweetStringBuilder = new StringBuilder(FormattingUtils.escapeRedditSpecialCharacters(tweet.getBody()));
         for (Map.Entry<String, Collection<RehostedImageEntity>> entry : tweet.getRehostedImageEntities().asMap().entrySet()) {
             replaceAll(tweetStringBuilder, entry.getKey(), getImageLinks(entry.getValue()));
         }
         for (Map.Entry<String, String> entry : tweet.getUrlEntities().entrySet()) {
-            replaceAll(tweetStringBuilder, entry.getKey(), getNoParticipationRedditLink(entry.getValue()));
+            replaceAll(tweetStringBuilder, entry.getKey(), FormattingUtils.getNoParticipationRedditLink(entry.getValue()));
         }
         return tweetStringBuilder.toString();
     }
@@ -73,46 +73,27 @@ public class ResponseCommentCreator implements ResponseCommentCreatorInterface {
     private String getImageLinks(Collection<RehostedImageEntity> rehostedImageEntities){
         StringBuilder result = new StringBuilder();
         for(RehostedImageEntity entity : rehostedImageEntities){
-            result.append("\n\n>");
+            result.append(FormattingUtils.NEW_LINE);
             result.append(createRedditImageWithRehostLink(entity));
         }
         return result.toString();
     }
 
     private String createRedditImageWithRehostLink(RehostedImageEntity entity) {
-        String result = createRedditHyperLink(entity.getOriginalUrl(), twitterPicLinkTemplate);
+        String result = FormattingUtils.createRedditHyperLink(entity.getOriginalUrl(), twitterPicLinkTemplate);
         if (entity.getRehostedUrl() != null) {
-            result = result + " " + createRedditHyperLink(entity.getRehostedUrl(), imgurPicLinkTemplate);
+            result = result + " " + FormattingUtils.createRedditHyperLink(entity.getRehostedUrl(), imgurPicLinkTemplate);
         }
         return result;
-    }
-
-    private String createRedditHyperLink(String source, String name) {
-        return "[" + name + "]" + "(" + source + ")";
     }
 
     private String convertDateToString(DateTime dateTime) {
         return dateTime.toDateTime(DateTimeZone.UTC).toString(datePattern);
     }
 
-    private String getNoParticipationRedditLink(String url) {
-        return url.replace("reddit.com", "np.reddit.com");
-    }
-
     private boolean isTrashTalkThread(Comment comment) {
         return comment.getLinkTitle().contains("TRASH TALK THREAD")
                 || comment.getLinkTitle().contains("THRASHTALK THREAD");
-    }
-
-    private String escapeRedditSpecialCharacters(String string) {
-        StringBuilder tweetStringBuilder = new StringBuilder(string);
-        replaceAll(tweetStringBuilder, ">", "\\>");
-        replaceAll(tweetStringBuilder, "\n", "\n\n> ");
-        replaceAll(tweetStringBuilder, "#", "\\#");
-        replaceAll(tweetStringBuilder, "^", "\\^");
-        replaceAll(tweetStringBuilder, "*", "\\*");
-        replaceAll(tweetStringBuilder, "_", "\\_");
-        return tweetStringBuilder.toString();
     }
 
     private void replaceAll(StringBuilder builder, String from, String to) {
