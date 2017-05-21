@@ -13,7 +13,7 @@ import java.net.URL;
  */
 public class ImgurConnectorITCase {
 
-    PropertiesReader propertiesReader = new PropertiesReader("resources/bot.properties");
+    PropertiesReader propertiesReader = new PropertiesReader("bot.properties");
 
     private String imageToCopyUrl = "http://i.imgur.com/mIuKLpu.jpg";
     ImgurConnectorInterface imgurConnector;

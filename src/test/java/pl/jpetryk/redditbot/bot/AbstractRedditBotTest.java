@@ -22,7 +22,7 @@ public class AbstractRedditBotTest {
 
     @org.junit.Test
     public void test() throws Exception {
-        PropertiesReader redditProperties = new PropertiesReader("resources/bot.properties");
+        PropertiesReader redditProperties = new PropertiesReader("bot.properties");
         for (int i = 0; i < 5; i++) {
             bot.run();
             Thread.sleep(Long.valueOf(redditProperties.getProperty("run-interval")));

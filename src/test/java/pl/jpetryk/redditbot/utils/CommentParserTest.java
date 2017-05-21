@@ -16,7 +16,7 @@ public class CommentParserTest {
     private static final String STATUS_2_ID = "494683729735196673";
     private static final String LONG_STATUS_URL_2 = "https://twitter.com/unidanbiology/status/" + STATUS_2_ID;
     private BaseCommentParser parser;
-    private PropertiesReader properties = new PropertiesReader("resources/twitter.properties");
+    private PropertiesReader properties = new PropertiesReader("twitter.properties");
 
     @Before
     public void init() {

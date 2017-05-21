@@ -2,6 +2,7 @@ package pl.jpetryk.redditbot.connectors;
 
 import static org.junit.Assert.*;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import pl.jpetryk.redditbot.model.PostCommentResult;
 import pl.jpetryk.redditbot.utils.PropertiesReader;
@@ -20,7 +21,7 @@ public abstract class AbstractRedditConnectorITCase<T extends RedditConnectorInt
 
     protected abstract T createInvalidInstance() throws NetworkConnectionException, RedditApiException;
 
-    protected PropertiesReader testProperties = new PropertiesReader("resources/testbot.properties");
+    protected PropertiesReader testProperties = new PropertiesReader("testbot.properties");
 
     protected T connector;
 
@@ -62,6 +63,7 @@ public abstract class AbstractRedditConnectorITCase<T extends RedditConnectorInt
     }
 
     @Test
+    @Ignore
     public void testPostComment() throws NetworkConnectionException, RedditApiException {
         connector = createValidInstance();
         String message = "This is bot integration test message. Please ignore.";

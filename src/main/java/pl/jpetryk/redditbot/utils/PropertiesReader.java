@@ -43,7 +43,7 @@ public class PropertiesReader {
     }
 
     private Properties openPropertyFile(String filePath) throws IOException {
-        InputStream inputStream = new FileInputStream(filePath);
+        InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream(filePath);
         Properties properties = new Properties();
         properties.load(inputStream);
         inputStream.close();

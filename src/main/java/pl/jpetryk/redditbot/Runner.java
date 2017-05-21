@@ -18,7 +18,7 @@ public class Runner {
     public static void main(String[] args) throws Exception {
 
 
-        PropertiesReader redditProperties = new PropertiesReader("resources/bot.properties");
+        PropertiesReader redditProperties = new PropertiesReader("bot.properties");
 
         configureLogger();
         Injector injector = Guice.createInjector(new BotModule());

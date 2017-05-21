@@ -8,7 +8,7 @@ import pl.jpetryk.redditbot.utils.PropertiesReader;
 public class Twitter4JConnectorITCase extends AbstractTwitterConnectorITCase<Twitter4JConnector> {
 
 
-    private PropertiesReader properties = new PropertiesReader("resources/twitter.properties");
+    private PropertiesReader properties = new PropertiesReader("twitter.properties");
 
     @Override
     protected Twitter4JConnector createInstance() {

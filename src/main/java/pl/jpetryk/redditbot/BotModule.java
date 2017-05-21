@@ -1,5 +1,6 @@
 package pl.jpetryk.redditbot;
 
+import com.google.common.io.CharStreams;
 import com.google.common.io.Files;
 import com.google.inject.AbstractModule;
 import com.google.inject.TypeLiteral;
@@ -14,6 +15,7 @@ import pl.jpetryk.redditbot.utils.ResponseCommentCreatorInterface;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,18 +28,18 @@ public class BotModule extends AbstractModule {
     @Override
     protected void configure() {
         try {
-            Names.bindProperties(binder(), new PropertiesReader("resources/twitter.properties").getProperties());
+            Names.bindProperties(binder(), new PropertiesReader("twitter.properties").getProperties());
             bind(TwitterConnectorInterface.class).to(Twitter4JConnector.class);
             bind(CommentParser.class).to(BaseCommentParser.class);
 
-            Names.bindProperties(binder(), new PropertiesReader("resources/template/template.properties").getProperties());
+            Names.bindProperties(binder(), new PropertiesReader("template/template.properties").getProperties());
             bindConstant().annotatedWith(Names.named("response-template")).to(
-                    Files.toString(new File("resources/template/reply-template"), Charset.defaultCharset()));
+                    CharStreams.toString(new InputStreamReader(this.getClass().getClassLoader().getResourceAsStream("template/reply-template"))));
             bindConstant().annotatedWith(Names.named("footer-template")).to(
-                    Files.toString(new File("resources/template/footer-template"), Charset.defaultCharset()));
+                    CharStreams.toString(new InputStreamReader(this.getClass().getClassLoader().getResourceAsStream("template/footer-template"))));
 
             bind(ResponseCommentCreatorInterface.class).to(ResponseCommentCreator.class);
-            PropertiesReader botProperties = new PropertiesReader("resources/bot.properties");
+            PropertiesReader botProperties = new PropertiesReader("bot.properties");
             Names.bindProperties(binder(), botProperties.getProperties());
             bind(ImgurConnectorInterface.class).to(ImgurConnector.class);
             bind(RedditConnectorInterface.class).to(JrawRedditConnector.class);

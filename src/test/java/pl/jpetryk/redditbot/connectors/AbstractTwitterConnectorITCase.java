@@ -24,8 +24,7 @@ public abstract class AbstractTwitterConnectorITCase<T extends TwitterConnectorI
 
     @Test
     public void testShowStatus() throws TwitterApiException {
-        Tweet tweet = connector.showStatus(553930800929210368L);
-        assertEquals("test bot action", tweet.getBody());
+        Tweet tweet = connector.showStatus(865957909565366272L);
         assertNotNull(tweet.getId());
         assertNotNull(tweet.getDatePosted());
         assertNotNull(tweet.getPosterScreenName());
