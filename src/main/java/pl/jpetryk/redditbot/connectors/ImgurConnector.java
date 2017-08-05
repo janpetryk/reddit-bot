@@ -1,6 +1,5 @@
 package pl.jpetryk.redditbot.connectors;
 
-import com.squareup.okhttp.OkHttpClient;
 import org.json.JSONException;
 import org.json.JSONObject;
 import pl.jpetryk.redditbot.exceptions.ImgurException;
@@ -9,7 +8,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.*;
 import java.net.*;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Created by Jan on 22/02/15.

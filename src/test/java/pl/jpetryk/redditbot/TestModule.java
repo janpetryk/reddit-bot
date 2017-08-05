@@ -1,12 +1,11 @@
 package pl.jpetryk.redditbot;
 
-import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
-import com.google.common.io.Files;
 import com.google.inject.AbstractModule;
-import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import com.google.inject.name.Names;
+import okhttp3.OkHttpClient;
+import org.codehaus.jackson.map.ObjectMapper;
 import pl.jpetryk.redditbot.bot.AbstractRedditBot;
 import pl.jpetryk.redditbot.bot.impl.TweetsInCommentsBot;
 import pl.jpetryk.redditbot.connectors.ImgurConnectorInterface;
@@ -16,16 +15,13 @@ import pl.jpetryk.redditbot.mock.connectors.ImgurConnectorMock;
 import pl.jpetryk.redditbot.mock.connectors.RedditConnectorMock;
 import pl.jpetryk.redditbot.mock.connectors.TwitterConnectorMock;
 import pl.jpetryk.redditbot.mock.parser.CommentParserMock;
-import pl.jpetryk.redditbot.parser.BaseCommentParser;
 import pl.jpetryk.redditbot.parser.CommentParser;
 import pl.jpetryk.redditbot.utils.PropertiesReader;
 import pl.jpetryk.redditbot.utils.ResponseCommentCreator;
 import pl.jpetryk.redditbot.utils.ResponseCommentCreatorInterface;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,6 +43,8 @@ public class TestModule extends AbstractModule {
             bind(ImgurConnectorInterface.class).to(ImgurConnectorMock.class);
             bind(TwitterConnectorInterface.class).to(TwitterConnectorMock.class);
             bind(ResponseCommentCreatorInterface.class).to(ResponseCommentCreator.class);
+            bind(OkHttpClient.class).toInstance(BotModule.okHttpClient());
+            bind(ObjectMapper.class).toInstance(BotModule.objectMapper());
             bind(CommentParser.class).to(CommentParserMock.class);
             bind(new TypeLiteral<List<String>>() {
             }).toInstance(new ArrayList<String>());

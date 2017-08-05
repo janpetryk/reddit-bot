@@ -3,7 +3,7 @@ package pl.jpetryk.redditbot.exceptions;
 /**
  * Created by Jan on 19/12/14.
  */
-public class RedditApiException extends Exception {
+public class RedditApiException extends RuntimeException {
 
     private String reason;
 

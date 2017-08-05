@@ -12,12 +12,12 @@ import java.util.List;
  */
 public interface RedditConnectorInterface {
 
-    public static final int MAX_COMMENTS_PER_REQUEST = 100;
+    int MAX_COMMENTS_PER_REQUEST = 100;
 
-    public List<Comment> getNewestSubredditComments(String subredditName)
+    List<Comment> getNewestSubredditComments(String subredditName)
             throws NetworkConnectionException;
 
-    public PostCommentResult replyToComment(String parentCommentFullName, String responseCommentBody)
+    PostCommentResult replyToComment(String parentCommentFullName, String responseCommentBody)
             throws NetworkConnectionException, RedditApiException;
 
 }

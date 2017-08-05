@@ -1,10 +1,12 @@
 package pl.jpetryk.redditbot;
 
 import com.google.common.io.CharStreams;
-import com.google.common.io.Files;
 import com.google.inject.AbstractModule;
 import com.google.inject.TypeLiteral;
 import com.google.inject.name.Names;
+import okhttp3.OkHttpClient;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.PropertyNamingStrategy;
 import pl.jpetryk.redditbot.bot.impl.TweetsInCommentsBot;
 import pl.jpetryk.redditbot.connectors.*;
 import pl.jpetryk.redditbot.parser.BaseCommentParser;
@@ -13,10 +15,8 @@ import pl.jpetryk.redditbot.utils.PropertiesReader;
 import pl.jpetryk.redditbot.utils.ResponseCommentCreator;
 import pl.jpetryk.redditbot.utils.ResponseCommentCreatorInterface;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -25,6 +25,19 @@ import java.util.List;
  * Created by Jan on 22/02/15.
  */
 public class BotModule extends AbstractModule {
+
+    public static OkHttpClient okHttpClient() {
+        OkHttpClient okHttpClient = new OkHttpClient();
+        return okHttpClient;
+    }
+
+    public static ObjectMapper objectMapper() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.setPropertyNamingStrategy(
+                PropertyNamingStrategy.CAMEL_CASE_TO_LOWER_CASE_WITH_UNDERSCORES);
+        return objectMapper;
+    }
+
     @Override
     protected void configure() {
         try {
@@ -42,7 +55,9 @@ public class BotModule extends AbstractModule {
             PropertiesReader botProperties = new PropertiesReader("bot.properties");
             Names.bindProperties(binder(), botProperties.getProperties());
             bind(ImgurConnectorInterface.class).to(ImgurConnector.class);
-            bind(RedditConnectorInterface.class).to(JrawRedditConnector.class);
+            bind(RedditConnectorInterface.class).to(CustomRedditConnector.class);
+            bind(OkHttpClient.class).toInstance(okHttpClient());
+            bind(ObjectMapper.class).toInstance(objectMapper());
             List<String> blacklist = new ArrayList<>(Arrays.asList(botProperties.getProperty("blacklist").split(", ")));
             blacklist.add(botProperties.getProperty("reddit-login"));
             bind(new TypeLiteral<List<String>>() {
