@@ -16,6 +16,7 @@ import twitter4j.HttpResponseCode;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -110,7 +111,7 @@ public class CustomRedditConnector implements RedditConnectorInterface {
                     result.add(comment);
                 }
             } else {
-                if (response.code() == HttpResponseCode.FORBIDDEN) {
+                if (response.code() == HttpURLConnection.HTTP_UNAUTHORIZED) {
                     authorize();
                 }
             }
@@ -140,7 +141,7 @@ public class CustomRedditConnector implements RedditConnectorInterface {
     }
 
     private PostCommentResult processResponse(Response response) throws IOException {
-        if (response.code() == 403) {
+        if (response.code() == HttpURLConnection.HTTP_FORBIDDEN) {
             return PostCommentResult.bannedFromThisSub();
         }
         String responseBody = response.body().string();
@@ -154,7 +155,7 @@ public class CustomRedditConnector implements RedditConnectorInterface {
             return PostCommentResult.successful(jsonNodeResponse.get("json").get("data").get("things").get(0)
                     .get("data").get("id").asText().substring(3));
         } else {
-            return PostCommentResult.unsuccessful(jsonNodeResponse.get("json").get("errrors").asText());
+            return PostCommentResult.unsuccessful(errors.asText());
         }
     }
 
