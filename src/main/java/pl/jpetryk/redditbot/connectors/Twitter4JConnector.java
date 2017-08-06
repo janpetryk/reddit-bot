@@ -23,6 +23,7 @@ public class Twitter4JConnector implements TwitterConnectorInterface {
                               @Named("access-token")String accessToken,
                               @Named("access-token-secret")String accessTokenSecret) {
         ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
+        configurationBuilder.setTweetModeExtended(true);
         configurationBuilder.setOAuthConsumerKey(apiKey);
         configurationBuilder.setOAuthConsumerSecret(apiSecret);
         configurationBuilder.setOAuthAccessToken(accessToken);
@@ -53,7 +54,7 @@ public class Twitter4JConnector implements TwitterConnectorInterface {
         for (URLEntity urlEntity : status.getURLEntities()) {
             tweetBuilder.addUrlEntity(urlEntity.getURL(), urlEntity.getExpandedURL());
         }
-        for (MediaEntity mediaEntity : status.getExtendedMediaEntities()) {
+        for (MediaEntity mediaEntity : status.getMediaEntities()) {
             if(isImage(mediaEntity)) {
                 tweetBuilder.addImageEntity(mediaEntity.getURL(), mediaEntity.getMediaURL());
             }
