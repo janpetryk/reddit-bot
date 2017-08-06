@@ -30,9 +30,6 @@ public class CustomRedditConnector implements RedditConnectorInterface {
 
     protected Logger logger = Logger.getLogger(this.getClass());
 
-    private OkHttpClient okHttpClient = new OkHttpClient();
-
-    private ObjectMapper objectMapper = new ObjectMapper();
 
     public static final String AUTH_HOST = "www.reddit.com";
     public static final String HOST = "oauth.reddit.com";
@@ -43,6 +40,8 @@ public class CustomRedditConnector implements RedditConnectorInterface {
     private String clientId;
     private String clientSecret;
     private String accessToken;
+    private OkHttpClient okHttpClient;
+    private ObjectMapper objectMapper;
 
     @Inject
     public CustomRedditConnector(@Named("reddit-useragent") String userAgent,
