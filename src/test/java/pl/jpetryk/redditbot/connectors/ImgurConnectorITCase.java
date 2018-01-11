@@ -2,6 +2,7 @@ package pl.jpetryk.redditbot.connectors;
 
 import com.google.common.io.BaseEncoding;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import pl.jpetryk.redditbot.utils.PropertiesReader;
 
@@ -19,6 +20,7 @@ public class ImgurConnectorITCase {
     ImgurConnectorInterface imgurConnector;
 
     @Test
+    @Ignore
     public void testUploadImg() throws Exception {
         imgurConnector = new ImgurConnector(propertiesReader.getProperty("imgur-client-id"),
                 propertiesReader.getProperty("imgur-client-secret"));
