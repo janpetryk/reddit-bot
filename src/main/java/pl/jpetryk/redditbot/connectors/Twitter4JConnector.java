@@ -10,6 +10,8 @@ import twitter4j.conf.ConfigurationBuilder;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import static pl.jpetryk.redditbot.utils.RequireUtils.requireNonEmpty;
+
 /**
  * Created by Jan on 09/01/15.
  */
@@ -18,10 +20,14 @@ public class Twitter4JConnector implements TwitterConnectorInterface {
     private Twitter twitter;
 
     @Inject
-    public Twitter4JConnector(@Named("api-key")String apiKey,
-                              @Named("api-secret")String apiSecret,
-                              @Named("access-token")String accessToken,
-                              @Named("access-token-secret")String accessTokenSecret) {
+    public Twitter4JConnector(@Named("api-key") String apiKey,
+                              @Named("api-secret") String apiSecret,
+                              @Named("access-token") String accessToken,
+                              @Named("access-token-secret") String accessTokenSecret) {
+        requireNonEmpty(apiKey, "Twitter api key is empty, add that in twitter.properties. ");
+        requireNonEmpty(apiSecret, "Twitter api secret is empty, add that in twitter.properties. ");
+        requireNonEmpty(accessToken, "Twitter access token is empty, add that in twitter.properties. ");
+        requireNonEmpty(accessTokenSecret, "Twitter access token secret is empty, add that in twitter.properties. ");
         ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
         configurationBuilder.setTweetModeExtended(true);
         configurationBuilder.setOAuthConsumerKey(apiKey);
@@ -55,7 +61,7 @@ public class Twitter4JConnector implements TwitterConnectorInterface {
             tweetBuilder.addUrlEntity(urlEntity.getURL(), urlEntity.getExpandedURL());
         }
         for (MediaEntity mediaEntity : status.getMediaEntities()) {
-            if(isImage(mediaEntity)) {
+            if (isImage(mediaEntity)) {
                 tweetBuilder.addImageEntity(mediaEntity.getURL(), mediaEntity.getMediaURL());
             }
         }

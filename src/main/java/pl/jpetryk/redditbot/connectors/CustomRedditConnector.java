@@ -11,7 +11,6 @@ import pl.jpetryk.redditbot.exceptions.RedditApiException;
 import pl.jpetryk.redditbot.model.Authorization;
 import pl.jpetryk.redditbot.model.Comment;
 import pl.jpetryk.redditbot.model.PostCommentResult;
-import twitter4j.HttpResponseCode;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -25,6 +24,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static pl.jpetryk.redditbot.utils.RequireUtils.requireNonEmpty;
 
 public class CustomRedditConnector implements RedditConnectorInterface {
 
@@ -52,6 +53,10 @@ public class CustomRedditConnector implements RedditConnectorInterface {
                                  OkHttpClient okHttpClient,
                                  ObjectMapper objectMapper)
             throws Exception {
+        requireNonEmpty(login, "Reddit login should not be empty, add in properties file");
+        requireNonEmpty(password, "Reddit password should not be empty, add in properties file");
+        requireNonEmpty(clientId, "Reddit client id should not be empty, add in properties file");
+        requireNonEmpty(clientSecret, "Reddit client secret should not be empty, add in properties file");
         this.userAgent = userAgent;
         this.login = login;
         this.password = password;

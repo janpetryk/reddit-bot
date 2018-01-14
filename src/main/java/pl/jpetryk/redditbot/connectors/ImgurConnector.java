@@ -9,6 +9,8 @@ import javax.inject.Named;
 import java.io.*;
 import java.net.*;
 
+import static pl.jpetryk.redditbot.utils.RequireUtils.requireNonEmpty;
+
 /**
  * Created by Jan on 22/02/15.
  */
@@ -22,6 +24,8 @@ public class ImgurConnector implements ImgurConnectorInterface {
     @Inject
     public ImgurConnector(@Named("imgur-client-id") String clientID,
                           @Named("imgur-client-secret") String clientSecret) {
+        requireNonEmpty(clientID, "imgur client id should not be empty, add in properties file");
+        requireNonEmpty(clientSecret, "imgur client secret should not be empty, add in properties file");
         this.clientID = clientID;
         this.clientSecret = clientSecret;
     }
